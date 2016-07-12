@@ -3,7 +3,8 @@
 const Lab = require('lab');
 const Code = require('code');
 const Joi = require('joi');
-const hapiCsv = require("../lib/index");
+const Hapi = require('hapi');
+const HapiCsv = require('../lib/index');
 
 const lab = exports.lab = Lab.script();
 const describe = lab.experiment;
@@ -12,142 +13,226 @@ const expect = Code.expect;
 
 describe('Hapi csv', () => {
 
-	describe('Basics', () => {
+    describe('Basics', () => {
 
-		it('Parse Joi schema', (done) => {
+        it('Register plugin with simple response schema', (done) => {
 
-			const testSchema = Joi.array().required().items({
-				testObject: Joi.object().keys({
-					testPropOne: Joi.number().required(),
-					testPropTwo: Joi.number(),
-					testPropThree: Joi.string()
-				}),
-				testNumber: Joi.number().required(),
-				testString: Joi.string().allow(null),
-				testEmail: Joi.string().email({errorLevel: 68}).lowercase().max(1000).required(),
-				testDate: Joi.date().iso().allow(null),
-				testArray: Joi.array().items(Joi.object().keys({
-					testPropOne: Joi.number().required(),
-					testPropTwo: Joi.string()
-				})),
-				testPrimitiveArray: Joi.array().items(Joi.number()),
-				testObjectWithoutKeys: Joi.object()
-			});
+            const server = new Hapi.Server();
+            server.connection();
 
-			const dataset = [{
-				"testObject": {
-					"testPropOne": 1,
-					"testPropTwo": 2,
-					"testPropThree": 3
-				},
-				"testNumber": 5,
-				"testString": "test",
-				"testEmail": "test@testprovider.com",
-				"testDate": "2016-07-04T13:56:31.000Z",
-				"testPrimitiveArray" : [5, 5],
-				"testArray": [{"testPropOne": 1, "testPropTwo": "One"}, {"testPropOne": 2, "testPropTwo": "Two"}, {"testPropOne": 3, "testPropTwo": "Three"}, {"testPropOne": 4, "testPropTwo": "Four"}],
-				"testObjectArrayWithoutKeys": []
-			}];
+            const testResponseSchema = Joi.object().keys({
+                first_name: Joi.string(),
+                last_name: Joi.string(),
+                age: Joi.number()
+            });
 
-			const csv = hapiCsv.schemaToCsv(testSchema, dataset, ",");
-			const expectedResult = `testObject.testPropOne,testObject.testPropTwo,testObject.testPropThree,testNumber,testString,testEmail,testDate,testArray_0.testPropOne,testArray_0.testPropTwo,testArray_1.testPropOne,testArray_1.testPropTwo,testArray_2.testPropOne,testArray_2.testPropTwo,testArray_3.testPropOne,testArray_3.testPropTwo,testArray_4.testPropOne,testArray_4.testPropTwo,testPrimitiveArray_0,testPrimitiveArray_1,testPrimitiveArray_2,testPrimitiveArray_3,testPrimitiveArray_4,
-"1","2","3","5","test","test@testprovider.com","2016-07-04T13:56:31.000Z","1","One","2","Two","3","Three","4","Four",,,"5","5",,,,`;
-			expect(csv ,'csv').to.equal(expectedResult);
+            server.register({ register: HapiCsv, options: { maximumElementsArray: 5, separator: ',' } }, (err) => {
 
-			return done();
-		});
+                expect(err, 'error').to.not.exist();
 
-		it('Dataset with null object', (done) => {
+                server.route([{
+                    method: 'GET',
+                    path: '/user',
+                    config: {
+                        handler: function (request, reply) {
 
-			const testSchema = Joi.array().required().items({
-				testObject: Joi.object().keys({
-					testPropOne: Joi.number().required(),
-					testPropTwo: Joi.number(),
-					testPropThree: Joi.string()
-				}),
-				testNumber: Joi.number().required(),
-				testString: Joi.string().allow(null),
-				testEmail: Joi.string().email({errorLevel: 68}).lowercase().max(1000).required(),
-				testDate: Joi.date().iso().allow(null),
-				testArray: Joi.array().items(Joi.object().keys({
-					testPropOne: Joi.number().required(),
-					testPropTwo: Joi.string()
-				})),
-				testPrimitiveArray: Joi.array().items(Joi.number()),
-				testObjectWithoutKeys: Joi.object()
-			});
+                            reply({
+                                first_name: 'firstName',
+                                last_name: 'lastName',
+                                age: 25
+                            });
+                        },
+                        response: {
+                            schema: testResponseSchema
+                        }
+                    }
+                }, {
+                    method: 'GET',
+                    path: '/userJson',
+                    config: {
+                        handler: function (request, reply) {
 
-			const dataset = [{
-				"testObject": null,
-				"testNumber": 5,
-				"testString": "test",
-				"testEmail": "test@testprovider.com",
-				"testDate": "2016-07-04T13:56:31.000Z",
-				"testPrimitiveArray" : [5, 5],
-				"testArray": [{"testPropOne": 1, "testPropTwo": "One"}, {"testPropOne": 2, "testPropTwo": "Two"}, {"testPropOne": 3, "testPropTwo": "Three"}, {"testPropOne": 4, "testPropTwo": "Four"}],
-				"testObjectArrayWithoutKeys": []
-			}];
+                            reply({
+                                first_name: 'firstName',
+                                last_name: 'lastName',
+                                age: 25
+                            });
+                        }
+                    }
+                }]);
 
-			const csv = hapiCsv.schemaToCsv(testSchema, dataset, ",");
-			const expectedResult = `testObject.testPropOne,testObject.testPropTwo,testObject.testPropThree,testNumber,testString,testEmail,testDate,testArray_0.testPropOne,testArray_0.testPropTwo,testArray_1.testPropOne,testArray_1.testPropTwo,testArray_2.testPropOne,testArray_2.testPropTwo,testArray_3.testPropOne,testArray_3.testPropTwo,testArray_4.testPropOne,testArray_4.testPropTwo,testPrimitiveArray_0,testPrimitiveArray_1,testPrimitiveArray_2,testPrimitiveArray_3,testPrimitiveArray_4,\n,,,"5","test","test@testprovider.com","2016-07-04T13:56:31.000Z","1","One","2","Two","3","Three","4","Four",,,"5","5",,,,`;
-			expect(csv ,'csv').to.equal(expectedResult);
+                server.initialize((err) => {
 
-			return done();
-		});
+                    expect(err, 'error').to.not.exist();
 
-		it('Parse simple Joi schema with primitive array', (done) => {
+                    server.inject({
+                        'method': 'GET',
+                        'url': '/user',
+                        'headers': {
+                            'Accept': 'text/csv'
+                        }
+                    }, (res) => {
 
-			const testSchema = Joi.array().required().items({
-				testObject: Joi.object().keys({
-					testPropOne: Joi.number().required(),
-					testPropTwo: Joi.number(),
-					testPropThree: Joi.string()
-				}),
-				testNumber: Joi.number().required(),
-				testString: Joi.string().allow(null),
-				testEmail: Joi.string().email({errorLevel: 68}).lowercase().max(1000).required(),
-				testDate: Joi.date().iso().allow(null),
-				testArray: Joi.array().items(Joi.object().keys({
-					testPropOne: Joi.number().required(),
-					testPropTwo: Joi.string()
-				})),
-				testObjectWithoutKeys: Joi.object()
-			});
+                        let expectedResult = `first_name,last_name,age,\n"firstName","lastName","25",`;
 
-			const dataset = [{
-				"testObject": {
-					"testPropOne": 1,
-					"testPropTwo": 2,
-					"testPropThree": 3
-				},
-				"testNumber": 5,
-				"testString": "test",
-				"testEmail": "test@testprovider.com",
-				"testDate": "2016-07-04T13:56:31.000Z",
-				"testArray": [{"testPropOne": 1, "testPropTwo": "One"}, {"testPropOne": 2, "testPropTwo": "Two"}, {"testPropOne": 3, "testPropTwo": "Three"}, {"testPropOne": 4, "testPropTwo": "Four"}],
-				"testObjectArrayWithoutKeys": []
-			}];
+                        expect(res.result).to.equal(expectedResult);
 
-			const csv = hapiCsv.schemaToCsv(testSchema, dataset, ";", 5);
-			const expectedResult = `testObject.testPropOne;testObject.testPropTwo;testObject.testPropThree;testNumber;testString;testEmail;testDate;testArray_0.testPropOne;testArray_0.testPropTwo;testArray_1.testPropOne;testArray_1.testPropTwo;testArray_2.testPropOne;testArray_2.testPropTwo;testArray_3.testPropOne;testArray_3.testPropTwo;testArray_4.testPropOne;testArray_4.testPropTwo;
-"1";"2";"3";"5";"test";"test@testprovider.com";"2016-07-04T13:56:31.000Z";"1";"One";"2";"Two";"3";"Three";"4";"Four";;;`;
+                        server.inject({
+                            'method': 'GET',
+                            'url': '/userJson',
+                            'headers': {
+                                'Accept': 'application/json'
+                            }
+                        }, (getResponse) => {
 
-			expect(csv ,'csv').to.equal(expectedResult);
+                            expectedResult = {
+                                first_name: 'firstName',
+                                last_name: 'lastName',
+                                age: 25
+                            };
 
-			return done();
-		});
-		it('Parse Joi schema existing of only a primitive type', (done) => {
+                            expect(getResponse.result).to.equal(expectedResult);
 
-			const testSchema = Joi.number();
+                            server.stop(done);
+                        });
+                    });
 
-			const dataset = 5;
 
-			const csv = hapiCsv.schemaToCsv(testSchema, dataset, ";", 5);
-			const expectedResult = 5;
+                });
 
-			expect(csv ,'csv').to.equal(expectedResult);
+            });
+        });
 
-			return done();
-		});
-	});
+        it('Plugin test with advanced schema', (done) => {
+
+            const server = new Hapi.Server();
+            server.connection();
+
+            const testResponseSchema = Joi.array().required().items({
+                testObject: Joi.object().keys({
+                    testPropOne: Joi.number().required(),
+                    testPropTwo: Joi.number(),
+                    testPropThree: Joi.string()
+                }).allow(null),
+                testNumber: Joi.number().required(),
+                testString: Joi.string().allow(null),
+                testEmail: Joi.string().email({ errorLevel: 68 }).lowercase().max(1000).required(),
+                testDate: Joi.date().iso().allow(null),
+                testArray: Joi.array().items(Joi.object().keys({
+                    testPropOne: Joi.number().required(),
+                    testPropTwo: Joi.string()
+                })),
+                testObjectArrayWithoutKeys: Joi.object(),
+                testPrimitiveArray: Joi.array().items(Joi.number())
+            });
+
+            const dataset = [{
+                'testObject': null,
+                'testNumber': 5,
+                'testString': 'test',
+                'testEmail': 'test@testprovider.com',
+                'testDate': '2016-07-04T13:56:31.000Z',
+                'testPrimitiveArray': [5, 5],
+                'testObjectArrayWithoutKeys': { 'testPropOne': 1 },
+                'testArray': [{ 'testPropOne': 1, 'testPropTwo': 'One' }, {
+                    'testPropOne': 2,
+                    'testPropTwo': 'Two'
+                }, { 'testPropOne': 3, 'testPropTwo': 'Three' }, { 'testPropOne': 4, 'testPropTwo': 'Four' }]
+            }];
+
+            server.register({ register: HapiCsv, options: {} }, (err) => {
+
+                expect(err, 'error').to.not.exist();
+
+                server.route([{
+                    method: 'GET',
+                    path: '/test',
+                    config: {
+                        handler: function (request, reply) {
+
+                            reply(dataset);
+                        },
+                        response: {
+                            schema: testResponseSchema
+                        }
+                    }
+                }]);
+
+                server.initialize((err) => {
+
+                    expect(err, 'error').to.not.exist();
+
+                    server.inject({
+                        method: 'GET',
+                        url: '/test',
+                        headers: {
+                            'Accept': 'text/csv'
+                        }
+                    }, (res) => {
+
+                        const expectedResult = 'testObject.testPropOne,testObject.testPropTwo,testObject.testPropThree,testNumber,testString,testEmail,testDate,testArray_0.testPropOne,testArray_0.testPropTwo,testArray_1.testPropOne,testArray_1.testPropTwo,testArray_2.testPropOne,testArray_2.testPropTwo,testArray_3.testPropOne,testArray_3.testPropTwo,testArray_4.testPropOne,testArray_4.testPropTwo,testPrimitiveArray_0,testPrimitiveArray_1,testPrimitiveArray_2,testPrimitiveArray_3,testPrimitiveArray_4,\n,,,"5","test","test@testprovider.com","2016-07-04T13:56:31.000Z","1","One","2","Two","3","Three","4","Four",,,"5","5",,,,';
+
+                        expect(res.result).to.equal(expectedResult);
+
+                        server.stop(done);
+                    });
+
+
+                });
+
+            });
+        });
+
+        it('Test plugin with schema existing of primitive type', (done) => {
+
+            const server = new Hapi.Server();
+            server.connection();
+
+            const testResponseSchema = Joi.number();
+
+            const dataset = 5;
+
+            server.register({ register: HapiCsv, options: {} }, (err) => {
+
+                expect(err, 'error').to.not.exist();
+
+                server.route([{
+                    method: 'GET',
+                    path: '/test',
+                    config: {
+                        handler: function (request, reply) {
+
+                            reply(dataset);
+                        },
+                        response: {
+                            schema: testResponseSchema
+                        }
+                    }
+                }]);
+
+                server.initialize((err) => {
+
+                    expect(err, 'error').to.not.exist();
+
+                    server.inject({
+                        method: 'GET',
+                        url: '/test',
+                        headers: {
+                            'Accept': 'text/csv'
+                        }
+                    }, (res) => {
+
+                        expect(res.result).to.equal(5);
+
+                        server.stop(done);
+                    });
+
+
+                });
+
+            });
+        });
+
+    });
 });
+
