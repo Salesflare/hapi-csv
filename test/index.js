@@ -26,7 +26,7 @@ describe('Hapi csv', () => {
                 age: Joi.number()
             });
 
-            server.register({ register: HapiCsv, options: { maximumElementsArray: 5, separator: ',' } }, (err) => {
+            server.register({ register: HapiCsv, options: { maximumElementsInArray: 5, separator: ',' } }, (err) => {
 
                 expect(err, 'error').to.not.exist();
 
@@ -69,13 +69,15 @@ describe('Hapi csv', () => {
                         'method': 'GET',
                         'url': '/user',
                         'headers': {
-                            'Accept': 'text/csv'
+                            'Accept': 'application/csv'
                         }
                     }, (res) => {
 
                         let expectedResult = `first_name,last_name,age,\n"firstName","lastName","25",`;
 
                         expect(res.result).to.equal(expectedResult);
+
+                        expect(res.headers['content-type']).to.equal('application/csv');
 
                         server.inject({
                             'method': 'GET',
@@ -93,7 +95,25 @@ describe('Hapi csv', () => {
 
                             expect(getResponse.result).to.equal(expectedResult);
 
-                            server.stop(done);
+                            server.inject({
+                                'method': 'GET',
+                                'url': '/user',
+                                'headers': {
+                                    'Accept': 'application/json'
+                                }
+                            }, (getResponseJson) => {
+
+                                expectedResult = {
+                                    first_name: 'firstName',
+                                    last_name: 'lastName',
+                                    age: 25
+                                };
+
+                                expect(getResponseJson.result).to.equal(expectedResult);
+
+                                server.stop(done);
+                            });
+
                         });
                     });
 

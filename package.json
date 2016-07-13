@@ -4,8 +4,8 @@
   "description": "Hapi plugin for converting a Joi response schema and dataset to csv",
   "main": "lib/index.js",
   "scripts": {
-    "test": "lab -a code -vL -t 100",
-    "test-cov-html": "lab -a code -vL -t 100 -r html"
+    "test": "lab -a code -vL --lint-fix -t 100",
+    "test-cov-html": "lab -a code -vL -t 100 -r html -o coverage.html"
   },
   "repository": {
     "type": "git",
