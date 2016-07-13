@@ -113,13 +113,9 @@ describe('Hapi csv', () => {
 
                                 server.stop(done);
                             });
-
                         });
                     });
-
-
                 });
-
             });
         });
 
@@ -196,10 +192,7 @@ describe('Hapi csv', () => {
 
                         server.stop(done);
                     });
-
-
                 });
-
             });
         });
 
@@ -246,10 +239,7 @@ describe('Hapi csv', () => {
 
                         server.stop(done);
                     });
-
-
                 });
-
             });
         });
 

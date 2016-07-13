@@ -22,7 +22,7 @@
   "license": "MIT",
   "dependencies": {
     "hoek": "4.x.x",
-    "joi": "8.x.x"
+    "joi": "9.x.x"
   },
   "devDependencies": {
     "code": "3.x.x",
