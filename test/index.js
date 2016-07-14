@@ -111,7 +111,24 @@ describe('Hapi csv', () => {
 
                                 expect(getResponseJson.result).to.equal(expectedResult);
 
-                                server.stop(done);
+                                server.inject({
+                                    'method': 'GET',
+                                    'url': '/user',
+                                    'headers': {
+                                        'Accept': ''
+                                    }
+                                }, (getResponseNoAcceptHeaders) => {
+
+                                    expectedResult = {
+                                        first_name: 'firstName',
+                                        last_name: 'lastName',
+                                        age: 25
+                                    };
+
+                                    expect(getResponseNoAcceptHeaders.result).to.equal(expectedResult);
+
+                                    server.stop(done);
+                                });
                             });
                         });
                     });
