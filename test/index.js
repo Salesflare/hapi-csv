@@ -145,6 +145,20 @@ describe('Hapi csv', () => {
             });
         });
 
+        it('Converts when route ends with .csv and has query params', (done) => {
+
+            return simpleServer.inject({
+                method: 'GET',
+                url: '/user.csv?q=1'
+            }, (res) => {
+
+                expect(res.result).to.equal(userCSV);
+                expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8');
+
+                return done();
+            });
+        });
+
         it('Still replies with JSON when asked', (done) => {
 
             return simpleServer.inject({
