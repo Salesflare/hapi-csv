@@ -154,6 +154,7 @@ describe('Hapi csv', () => {
 
                 expect(res.result).to.equal(userCSV);
                 expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8');
+                expect(res.request.url.path).to.equal('/user?q=1');
 
                 return done();
             });
