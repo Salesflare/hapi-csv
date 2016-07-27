@@ -33,7 +33,7 @@ describe('Hapi csv', () => {
         });
     });
 
-    describe('Basic convertions', () => {
+    describe('Basic conversions', () => {
 
         let simpleServer;
         const user = {
@@ -72,6 +72,15 @@ describe('Hapi csv', () => {
                     handler: function (request, reply) {
 
                         return reply(user);
+                    }
+                }
+            }, {
+                method: 'GET',
+                path: '/error',
+                config: {
+                    handler: function (request, reply) {
+
+                        return reply(new Error());
                     }
                 }
             }]);
@@ -210,9 +219,30 @@ describe('Hapi csv', () => {
                 return done();
             });
         });
+
+        it('Passes on errors', (done) => {
+
+            return simpleServer.inject({
+                method: 'GET',
+                url: '/error',
+                headers: {
+                    Accept: 'text/csv'
+                }
+            }, (res) => {
+
+                expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
+                expect(res.result).to.equal({
+                    statusCode: 500,
+                    error: 'Internal Server Error',
+                    message: 'An internal server error occurred'
+                });
+
+                return done();
+            });
+        });
     });
 
-    describe('Advanced convertions', () => {
+    describe('Advanced conversions', () => {
 
         it('Converts more advanced, nested schema', (done) => {
 
