@@ -118,6 +118,7 @@ describe('Hapi csv', () => {
 
                 expect(res.result).to.equal(userCSV);
                 expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8');
+                expect(res.headers['content-disposition']).to.equal('attachment;');
 
                 return done();
             });
@@ -135,6 +136,7 @@ describe('Hapi csv', () => {
 
                 expect(res.result).to.equal(userCSV);
                 expect(res.headers['content-type']).to.equal('application/csv');
+                expect(res.headers['content-disposition']).to.equal('attachment;');
 
                 return done();
             });
@@ -149,6 +151,7 @@ describe('Hapi csv', () => {
 
                 expect(res.result).to.equal(userCSV);
                 expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8');
+                expect(res.headers['content-disposition']).to.equal('attachment;');
 
                 return done();
             });
@@ -163,6 +166,7 @@ describe('Hapi csv', () => {
 
                 expect(res.result).to.equal(userCSV);
                 expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8');
+                expect(res.headers['content-disposition']).to.equal('attachment;');
                 expect(res.request.url.path).to.equal('/user?q=1');
 
                 return done();
@@ -323,6 +327,8 @@ describe('Hapi csv', () => {
                         const expectedResult = 'testObject.testPropOne,testObject.testPropTwo,testObject.testPropThree,testNumber,testString,testEmail,testDate,testArray_0.testPropOne,testArray_0.testPropTwo,testArray_1.testPropOne,testArray_1.testPropTwo,testArray_2.testPropOne,testArray_2.testPropTwo,testArray_3.testPropOne,testArray_3.testPropTwo,testArray_4.testPropOne,testArray_4.testPropTwo,testPrimitiveArray_0,testPrimitiveArray_1,testPrimitiveArray_2,testPrimitiveArray_3,testPrimitiveArray_4,\n,,,"5","test","test@testprovider.com","2016-07-04T13:56:31.000Z","1","One","2","Two","3","Three","4","Four",,,"5","5",,,,';
 
                         expect(res.result).to.equal(expectedResult);
+                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8');
+                        expect(res.headers['content-disposition']).to.equal('attachment;');
 
                         return server.stop(done);
                     });
@@ -366,6 +372,8 @@ describe('Hapi csv', () => {
                     }, (res) => {
 
                         expect(res.result).to.equal(5);
+                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8');
+                        expect(res.headers['content-disposition']).to.equal('attachment;');
 
                         return server.stop(done);
                     });
@@ -432,6 +440,8 @@ describe('Hapi csv', () => {
                     }, (res) => {
 
                         expect(res.result, 'result').to.equal(userCSV);
+                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8');
+                        expect(res.headers['content-disposition']).to.equal('attachment;');
 
                         return server.stop(done);
                     });

@@ -46,3 +46,5 @@ const routes = [{
 Either do `GET /users` with header `Accept: text/csv` or `Accept: application/csv`.
 Or do `GET /users.csv`.
 The header approach is prefered.
+
+Currently the `content-disposition` header is set to `attachment;` by default since this plugin is intended for exporting purposes, if this hinders you just let us know.
