@@ -224,6 +224,23 @@ describe('Hapi csv', () => {
             });
         });
 
+        it('Still replies with JSON when Accept header contains wildcard', (done) => {
+
+            return simpleServer.inject({
+                method: 'GET',
+                url: '/user',
+                headers: {
+                    Accept: 'application/json, */*'
+                }
+            }, (res) => {
+
+                expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
+                expect(res.result).to.equal(user);
+
+                return done();
+            });
+        });
+
         it('Passes on errors', (done) => {
 
             return simpleServer.inject({
