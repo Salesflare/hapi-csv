@@ -30,7 +30,7 @@
     "lab": "10.x.x"
   },
   "peerDependencies": {
-    "hapi": ">=13.x.x",
+    "hapi": ">=14.0.0",
     "joi": ">=9.x.x"
   },
   "bugs": {
