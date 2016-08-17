@@ -27,7 +27,7 @@
     "joi": "9.x.x",
     "code": "3.x.x",
     "hapi": "13.x.x",
-    "lab": "10.x.x"
+    "lab": "11.x.x"
   },
   "peerDependencies": {
     "hapi": ">=13.x.x",
