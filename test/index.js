@@ -466,4 +466,149 @@ describe('Hapi csv', () => {
             });
         });
     });
+
+    describe('Result key (e.g. for pagination)', () => {
+
+        it('Uses the result key', (done) => {
+
+            const result = {
+                page: 1,
+                items: [{
+                    first_name: 'firstName1',
+                    last_name: 'lastName1',
+                    age: 25
+                }, {
+                    first_name: 'firstName2',
+                    last_name: 'lastName2',
+                    age: 27
+                }]
+            };
+
+            const userCSV = `first_name,last_name,age,\n"firstName1","lastName1","25",\n"firstName2","lastName2","27",`;
+
+            const server = new Hapi.Server();
+            server.connection();
+
+            return server.register({
+                register: HapiCsv,
+                options: {
+                    resultKey: 'items'
+                }
+            }, (err) => {
+
+                expect(err, 'error').to.not.exist();
+
+                server.route([{
+                    method: 'GET',
+                    path: '/test',
+                    config: {
+                        handler: function (request, reply) {
+
+                            return reply(result);
+                        },
+                        response: {
+                            schema: Joi.object({
+                                page: Joi.number(),
+                                items: Joi.array().items(
+                                    Joi.object().keys({
+                                        first_name: Joi.string(),
+                                        last_name: Joi.string(),
+                                        age: Joi.number()
+                                    })
+                                )
+                            })
+                        }
+                    }
+                }]);
+
+                return server.initialize((err) => {
+
+                    expect(err, 'error').to.not.exist();
+
+                    return server.inject({
+                        method: 'GET',
+                        url: '/test',
+                        headers: {
+                            'Accept': 'text/csv'
+                        }
+                    }, (res) => {
+
+                        expect(res.result, 'result').to.equal(userCSV);
+                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8');
+                        expect(res.headers['content-disposition']).to.equal('attachment;');
+
+                        return server.stop(done);
+                    });
+                });
+            });
+        });
+
+        it('Ignores the result key if not used in the response', (done) => {
+
+            const result = [{
+                first_name: 'firstName1',
+                last_name: 'lastName1',
+                age: 25
+            }, {
+                first_name: 'firstName2',
+                last_name: 'lastName2',
+                age: 27
+            }];
+
+            const userCSV = `first_name,last_name,age,\n"firstName1","lastName1","25",\n"firstName2","lastName2","27",`;
+
+            const server = new Hapi.Server();
+            server.connection();
+
+            return server.register({
+                register: HapiCsv,
+                options: {
+                    resultKey: 'items'
+                }
+            }, (err) => {
+
+                expect(err, 'error').to.not.exist();
+
+                server.route([{
+                    method: 'GET',
+                    path: '/test',
+                    config: {
+                        handler: function (request, reply) {
+
+                            return reply(result);
+                        },
+                        response: {
+                            schema: Joi.array().items(
+                                Joi.object().keys({
+                                    first_name: Joi.string(),
+                                    last_name: Joi.string(),
+                                    age: Joi.number()
+                                })
+                            )
+                        }
+                    }
+                }]);
+
+                return server.initialize((err) => {
+
+                    expect(err, 'error').to.not.exist();
+
+                    return server.inject({
+                        method: 'GET',
+                        url: '/test',
+                        headers: {
+                            'Accept': 'text/csv'
+                        }
+                    }, (res) => {
+
+                        expect(res.result, 'result').to.equal(userCSV);
+                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8');
+                        expect(res.headers['content-disposition']).to.equal('attachment;');
+
+                        return server.stop(done);
+                    });
+                });
+            });
+        });
+    });
 });
