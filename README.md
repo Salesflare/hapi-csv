@@ -48,3 +48,30 @@ Or do `GET /users.csv`.
 The header approach is prefered.
 
 Currently the `content-disposition` header is set to `attachment;` by default since this plugin is intended for exporting purposes, if this hinders you just let us know.
+
+To handle typical pagination responses like
+
+```json
+{
+    "page": 1,
+    "items": [
+        { "name": "Anton", "age": 22 },
+        { "name": "Lisa", "age": 25 }
+    ]
+}
+```
+
+pass in the `resultKey` option:
+
+```javascript
+server.register({
+    register: require('hapi-csv'),
+    options: {
+        resultKey: 'items'
+    }
+}, function (err) {
+
+    if (err) throw err;
+    ...
+});
+```
