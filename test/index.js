@@ -41,7 +41,7 @@ describe('Hapi csv', () => {
             last_name: 'lastName',
             age: 25
         };
-        const userCSV = `first_name,last_name,age,\n"firstName","lastName","25",`;
+        const userCSV = 'first_name,last_name,age,\n"firstName","lastName","25",';
         const testResponseSchema = Joi.object().keys({
             first_name: Joi.string(),
             last_name: Joi.string(),
@@ -397,6 +397,51 @@ describe('Hapi csv', () => {
                 });
             });
         });
+
+        it('Parse a value containing embedded double quotes', (done) => {
+
+            const server = new Hapi.Server();
+            server.connection();
+
+            return server.register(HapiCsv, (err) => {
+
+                expect(err, 'error').to.not.exist();
+
+                server.route([{
+                    method: 'GET',
+                    path: '/test',
+                    config: {
+                        handler: function (request, reply) {
+
+                            return reply('I said: "Hello"');
+                        },
+                        response: {
+                            schema: Joi.string()
+                        }
+                    }
+                }]);
+
+                return server.initialize((err) => {
+
+                    expect(err, 'error').to.not.exist();
+
+                    return server.inject({
+                        method: 'GET',
+                        url: '/test',
+                        headers: {
+                            'Accept': 'text/csv'
+                        }
+                    }, (res) => {
+
+                        expect(res.result).to.equal('I said: ""Hello""');
+                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8');
+                        expect(res.headers['content-disposition']).to.equal('attachment;');
+
+                        return server.stop(done);
+                    });
+                });
+            });
+        });
     });
 
     // todo add array depth test
@@ -410,7 +455,7 @@ describe('Hapi csv', () => {
                 age: 25,
                 tags: ['person', 'guitar']
             };
-            const userCSV = `first_name+last_name+age+tags_0+\n"firstName"+"lastName"+"25"+"person"+`;
+            const userCSV = 'first_name+last_name+age+tags_0+\n"firstName"+"lastName"+"25"+"person"+';
 
             const server = new Hapi.Server();
             server.connection();
@@ -484,7 +529,7 @@ describe('Hapi csv', () => {
                 }]
             };
 
-            const userCSV = `first_name,last_name,age,\n"firstName1","lastName1","25",\n"firstName2","lastName2","27",`;
+            const userCSV = 'first_name,last_name,age,\n"firstName1","lastName1","25",\n"firstName2","lastName2","27",';
 
             const server = new Hapi.Server();
             server.connection();
@@ -555,7 +600,7 @@ describe('Hapi csv', () => {
                 age: 27
             }];
 
-            const userCSV = `first_name,last_name,age,\n"firstName1","lastName1","25",\n"firstName2","lastName2","27",`;
+            const userCSV = 'first_name,last_name,age,\n"firstName1","lastName1","25",\n"firstName2","lastName2","27",';
 
             const server = new Hapi.Server();
             server.connection();
