@@ -41,7 +41,7 @@ describe('Hapi csv', () => {
             last_name: 'lastName',
             age: 25
         };
-        const userCSV = `first_name,last_name,age,\n"firstName","lastName","25",`;
+        const userCSV = 'first_name,last_name,age,\n"firstName","lastName","25",';
         const testResponseSchema = Joi.object().keys({
             first_name: Joi.string(),
             last_name: Joi.string(),
@@ -410,7 +410,7 @@ describe('Hapi csv', () => {
                 age: 25,
                 tags: ['person', 'guitar']
             };
-            const userCSV = `first_name+last_name+age+tags_0+\n"firstName"+"lastName"+"25"+"person"+`;
+            const userCSV = 'first_name+last_name+age+tags_0+\n"firstName"+"lastName"+"25"+"person"+';
 
             const server = new Hapi.Server();
             server.connection();
@@ -484,7 +484,7 @@ describe('Hapi csv', () => {
                 }]
             };
 
-            const userCSV = `first_name,last_name,age,\n"firstName1","lastName1","25",\n"firstName2","lastName2","27",`;
+            const userCSV = 'first_name,last_name,age,\n"firstName1","lastName1","25",\n"firstName2","lastName2","27",';
 
             const server = new Hapi.Server();
             server.connection();
@@ -555,7 +555,7 @@ describe('Hapi csv', () => {
                 age: 27
             }];
 
-            const userCSV = `first_name,last_name,age,\n"firstName1","lastName1","25",\n"firstName2","lastName2","27",`;
+            const userCSV = 'first_name,last_name,age,\n"firstName1","lastName1","25",\n"firstName2","lastName2","27",';
 
             const server = new Hapi.Server();
             server.connection();
