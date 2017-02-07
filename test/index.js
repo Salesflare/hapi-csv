@@ -42,11 +42,18 @@ describe('Hapi csv', () => {
             age: 25
         };
         const userCSV = 'first_name,last_name,age,\n"firstName","lastName","25",';
+        const postUser = {
+            first_name: user.first_name
+        };
+        const postUserCSV = 'first_name,\n"firstName",';
         const testResponseSchema = Joi.object().keys({
             first_name: Joi.string(),
             last_name: Joi.string(),
             age: Joi.number()
         });
+        const testPostResponseSchema = Joi.array().items(Joi.object().keys({
+            first_name: Joi.string()
+        })).single();
 
         before((done) => {
 
@@ -65,7 +72,20 @@ describe('Hapi csv', () => {
                         schema: testResponseSchema
                     }
                 }
-            }, {
+            },
+                {
+                    method: 'POST',
+                    path: '/user',
+                    config: {
+                        handler: function (request, reply) {
+
+                            return reply(postUser);
+                        },
+                        response: {
+                            schema: testPostResponseSchema
+                        }
+                    }
+                }, {
                 method: 'GET',
                 path: '/userWithoutSchema',
                 config: {
@@ -257,6 +277,24 @@ describe('Hapi csv', () => {
                     error: 'Internal Server Error',
                     message: 'An internal server error occurred'
                 });
+
+                return done();
+            });
+        });
+
+        it('Replies with the right response when there are similar routes with different methods', (done) => {
+
+            return simpleServer.inject({
+                method: 'POST',
+                url: '/user',
+                headers: {
+                    'Accept': 'text/csv'
+                }
+            }, (res) => {
+
+                expect(res.result).to.equal(postUserCSV);
+                expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8');
+                expect(res.headers['content-disposition']).to.equal('attachment;');
 
                 return done();
             });
