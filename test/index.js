@@ -73,19 +73,19 @@ describe('Hapi csv', () => {
                     }
                 }
             },
-                {
-                    method: 'POST',
-                    path: '/user',
-                    config: {
-                        handler: function (request, reply) {
+            {
+                method: 'POST',
+                path: '/user',
+                config: {
+                    handler: function (request, reply) {
 
-                            return reply(postUser);
-                        },
-                        response: {
-                            schema: testPostResponseSchema
-                        }
+                        return reply(postUser);
+                    },
+                    response: {
+                        schema: testPostResponseSchema
                     }
-                }, {
+                }
+            }, {
                 method: 'GET',
                 path: '/userWithoutSchema',
                 config: {

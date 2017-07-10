@@ -1,6 +1,7 @@
 # Hapi-csv [![Build Status](https://travis-ci.org/Salesflare/hapi-csv.svg?branch=master)](https://travis-ci.org/Salesflare/hapi-csv)
 
 ## What
+
 Converts the response to csv based on the Joi response schema when the Accept header includes `text/csv` or `application/csv` or the requested route ends with `.csv`
 
 ## How
@@ -11,15 +12,15 @@ Register the hapi-csv plugin on the server
 
 ```javascript
 server.register({
-	register: require('hapi-csv'),
-	options: {
-		maximumElementsInArray: 5,
-		separator: ','
-	}
+    register: require('hapi-csv'),
+    options: {
+        maximumElementsInArray: 5,
+        separator: ','
+    }
 }, function (err) {
 
-	if (err) throw err;
-	...
+    if (err) throw err;
+    ...
 });
 ```
 
@@ -45,7 +46,7 @@ const routes = [{
 
 Either do `GET /users` with header `Accept: text/csv` or `Accept: application/csv`.
 Or do `GET /users.csv`.
-The header approach is prefered.
+The header approach is preferred.
 
 Currently the `content-disposition` header is set to `attachment;` by default since this plugin is intended for exporting purposes, if this hinders you just let us know.
 
