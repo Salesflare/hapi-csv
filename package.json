@@ -21,7 +21,7 @@
   "author": "Kevin De Clerck",
   "license": "MIT",
   "dependencies": {
-    "hoek": "4.x.x"
+    "hoek": "^5.0.0"
   },
   "devDependencies": {
     "joi": "^11.0.0",
