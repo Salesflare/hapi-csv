@@ -550,6 +550,148 @@ describe('Hapi csv', () => {
         });
     });
 
+    describe('Dynamic schemas', () => {
+
+        it('Uses dynamic schemas', (done) => {
+
+            const user = {
+                first_name: 'firstName',
+                last_name: 'lastName',
+                age: 25,
+                tag: { id: 1, name: 'guitar' }
+            };
+
+            const userCSV = 'first_name,last_name,age,tag.id,tag.name,\n"firstName","lastName","25","1","guitar",';
+
+            const server = new Hapi.Server();
+            server.connection();
+
+            return server.register({
+                register: HapiCsv
+            }, (err) => {
+
+                expect(err, 'error').to.not.exist();
+
+                server.route([{
+                    method: 'GET',
+                    path: '/test',
+                    config: {
+                        handler: function (request, reply) {
+
+                            return reply(user);
+                        },
+                        response: {
+                            schema: Joi.object().keys({
+                                first_name: Joi.string(),
+                                last_name: Joi.string(),
+                                age: Joi.number(),
+                                tag: Joi.object()
+                            })
+                        },
+                        plugins: {
+                            'hapi-csv': {
+                                'tag': (request, callback) => {
+
+                                    const schema = Joi.object().keys({
+                                        id: Joi.number(),
+                                        name: Joi.string()
+                                    });
+
+                                    return callback(null, schema);
+                                }
+                            }
+                        }
+                    }
+                }]);
+
+                return server.initialize((err) => {
+
+                    expect(err, 'error').to.not.exist();
+
+                    return server.inject({
+                        method: 'GET',
+                        url: '/test',
+                        headers: {
+                            'Accept': 'text/csv'
+                        }
+                    }, (res) => {
+
+                        expect(res.result, 'result').to.equal(userCSV);
+                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8');
+                        expect(res.headers['content-disposition']).to.equal('attachment;');
+
+                        return server.stop(done);
+                    });
+                });
+            });
+        });
+
+        it('Uses dynamic schemas: resolver function throws an error', (done) => {
+
+            const user = {
+                first_name: 'firstName',
+                last_name: 'lastName',
+                age: 25,
+                tag: { id: 1, name: 'guitar' }
+            };
+
+            const server = new Hapi.Server();
+            server.connection();
+
+            return server.register({
+                register: HapiCsv
+            }, (err) => {
+
+                expect(err, 'error').to.not.exist();
+
+                server.route([{
+                    method: 'GET',
+                    path: '/test',
+                    config: {
+                        handler: function (request, reply) {
+
+                            return reply(user);
+                        },
+                        response: {
+                            schema: Joi.object().keys({
+                                first_name: Joi.string(),
+                                last_name: Joi.string(),
+                                age: Joi.number(),
+                                tag: Joi.object()
+                            })
+                        },
+                        plugins: {
+                            'hapi-csv': {
+                                'tag': (request, callback) => {
+
+                                    return callback(new Error('ERROR'));
+                                }
+                            }
+                        }
+                    }
+                }]);
+
+                return server.initialize((err) => {
+
+                    expect(err, 'error').to.not.exist();
+
+                    return server.inject({
+                        method: 'GET',
+                        url: '/test',
+                        headers: {
+                            'Accept': 'text/csv'
+                        }
+                    }, (res) => {
+
+                        expect(res.statusCode, 'statusCode').to.equal(500);
+
+                        return server.stop(done);
+                    });
+                });
+            });
+        });
+    });
+
     describe('Result key (e.g. for pagination)', () => {
 
         it('Uses the result key', (done) => {
