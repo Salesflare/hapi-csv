@@ -28,7 +28,7 @@
     "joi": "^11.0.0",
     "code": "4.x.x",
     "hapi": "16.x.x",
-    "lab": "14.x.x"
+    "lab": "^15.0.0"
   },
   "peerDependencies": {
     "hapi": ">=16.1.1",
