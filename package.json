@@ -27,7 +27,7 @@
   "devDependencies": {
     "joi": "^11.0.0",
     "code": "4.x.x",
-    "hapi": "16.x.x",
+    "hapi": "^17.0.0",
     "lab": "14.x.x"
   },
   "peerDependencies": {
