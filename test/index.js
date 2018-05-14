@@ -318,6 +318,7 @@ describe('Hapi csv', () => {
                 testString: Joi.string().allow(null),
                 testEmail: Joi.string().email({ errorLevel: 68 }).lowercase().max(1000).required(),
                 testDate: Joi.date().iso().allow(null),
+                testDateObject: Joi.date().iso().allow(null),
                 testArray: Joi.array().items(Joi.object().keys({
                     testPropOne: Joi.number().required(),
                     testPropTwo: Joi.string()
@@ -332,6 +333,7 @@ describe('Hapi csv', () => {
                 testString: 'test',
                 testEmail: 'test@testprovider.com',
                 testDate: '2016-07-04T13:56:31.000Z',
+                testDateObject: new Date('2016-07-04T13:56:31.000Z'),
                 testPrimitiveArray: [5, 5],
                 testObjectArrayWithoutKeys: { 'testPropOne': 1 },
                 testArray: [{
@@ -379,7 +381,7 @@ describe('Hapi csv', () => {
                         }
                     }, (res) => {
 
-                        const expectedResult = 'testObject.testPropOne,testObject.testPropTwo,testObject.testPropThree,testNumber,testString,testEmail,testDate,testArray_0.testPropOne,testArray_0.testPropTwo,testArray_1.testPropOne,testArray_1.testPropTwo,testArray_2.testPropOne,testArray_2.testPropTwo,testArray_3.testPropOne,testArray_3.testPropTwo,testArray_4.testPropOne,testArray_4.testPropTwo,testPrimitiveArray_0,testPrimitiveArray_1,testPrimitiveArray_2,testPrimitiveArray_3,testPrimitiveArray_4,\n,,,"5","test","test@testprovider.com","2016-07-04T13:56:31.000Z","1","One","2","Two","3","Three","4","Four",,,"5","5",,,,';
+                        const expectedResult = 'testObject.testPropOne,testObject.testPropTwo,testObject.testPropThree,testNumber,testString,testEmail,testDate,testDateObject,testArray_0.testPropOne,testArray_0.testPropTwo,testArray_1.testPropOne,testArray_1.testPropTwo,testArray_2.testPropOne,testArray_2.testPropTwo,testArray_3.testPropOne,testArray_3.testPropTwo,testArray_4.testPropOne,testArray_4.testPropTwo,testPrimitiveArray_0,testPrimitiveArray_1,testPrimitiveArray_2,testPrimitiveArray_3,testPrimitiveArray_4,\n,,,"5","test","test@testprovider.com","2016-07-04T13:56:31.000Z","2016-07-04T13:56:31.000Z","1","One","2","Two","3","Three","4","Four",,,"5","5",,,,';
 
                         expect(res.result).to.equal(expectedResult);
                         expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8');
