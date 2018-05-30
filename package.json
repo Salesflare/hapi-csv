@@ -20,7 +20,7 @@
   "author": "Salesflare Team",
   "license": "MIT",
   "dependencies": {
-    "async": "^2.6.0",
+    "async": "^2.6.1",
     "hoek": "5.x.x"
   },
   "devDependencies": {
