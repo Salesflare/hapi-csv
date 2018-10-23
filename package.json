@@ -24,7 +24,7 @@
     "hoek": "5.x.x"
   },
   "devDependencies": {
-    "code": "4.x.x",
+    "code": "^5.2.1",
     "hapi": "^16.6.3",
     "joi": "^13.0.0",
     "lab": "^14.3.4"
