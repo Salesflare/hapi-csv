@@ -21,7 +21,7 @@
   "license": "MIT",
   "dependencies": {
     "async": "^2.6.1",
-    "hoek": "5.x.x"
+    "hoek": "^6.0.0"
   },
   "devDependencies": {
     "code": "4.x.x",
