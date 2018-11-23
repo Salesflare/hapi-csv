@@ -21,12 +21,13 @@
   "license": "MIT",
   "dependencies": {
     "async": "^2.6.1",
-    "hoek": "5.x.x"
+    "hoek": "^5.0.4",
+    "xlsx": "^0.14.1"
   },
   "devDependencies": {
     "code": "4.x.x",
-    "hapi": "^16.6.3",
-    "joi": "^13.0.0",
+    "hapi": "^16.7.0",
+    "joi": "^13.7.0",
     "lab": "^14.3.4"
   },
   "peerDependencies": {
