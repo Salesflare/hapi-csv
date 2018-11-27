@@ -838,4 +838,75 @@ describe('Hapi csv', () => {
             });
         });
     });
+
+	describe('xlsx export', () => {
+
+		it('Transforms the response to an xlsx format', (done) => {
+
+			const result = [{
+				first_name: 'firstName1',
+				last_name: 'lastName1',
+				age: 25
+			}, {
+				first_name: 'firstName2',
+				last_name: 'lastName2',
+				age: 27
+			}];
+
+			const expectedString = '<si><t>first_name</t></si><si><t>last_name</t></si><si><t>age</t></si><si><t>firstName1</t></si><si><t>lastName1</t></si><si><t>firstName2</t></si><si><t>lastName2</t></si>';
+
+			const server = new Hapi.Server();
+			server.connection();
+
+			return server.register({
+				register: HapiCsv,
+				options: {
+					resultKey: 'items',
+					enableExcel: true
+				}
+			}, (err) => {
+
+				expect(err, 'error').to.not.exist();
+
+				server.route([{
+					method: 'GET',
+					path: '/test',
+					config: {
+						handler: function (request, reply) {
+
+							return reply(result);
+						},
+						response: {
+							schema: Joi.array().items(
+								Joi.object().keys({
+									first_name: Joi.string(),
+									last_name: Joi.string(),
+									age: Joi.number()
+								})
+							)
+						}
+					}
+				}]);
+
+				return server.initialize((err) => {
+``
+					expect(err, 'error').to.not.exist();
+
+					return server.inject({
+						method: 'GET',
+						url: '/test',
+						headers: {
+							'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+						}
+					}, (res) => {
+
+						expect(res.payload, 'payload').to.include(expectedString);
+						expect(res.headers['content-type']).to.equal('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8; header=present;');
+
+						return server.stop(done);
+					});
+				});
+			});
+		});
+	});
 });
