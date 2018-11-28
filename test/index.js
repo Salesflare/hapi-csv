@@ -17,19 +17,21 @@ describe('Hapi csv', () => {
 
     describe('Basics', () => {
 
-        it('Registers', (done) => {
+        it('Registers', async () => {
 
             const server = new Hapi.Server();
-            server.connection();
+            let err;
 
-            server.register({
-                register: HapiCsv
-            }, (err) => {
+            try {
+                await server.register({
+                    plugin: HapiCsv
+                });
+            }
+            catch (e) {
+                err = e;
+            }
 
-                expect(err, 'error').to.not.exists();
-
-                return done();
-            });
+            expect(err, 'error').to.not.exists();
         });
     });
 
@@ -55,18 +57,18 @@ describe('Hapi csv', () => {
             first_name: Joi.string()
         })).single();
 
-        before((done) => {
+        before(async () => {
 
             simpleServer = new Hapi.Server();
-            simpleServer.connection();
+            let err;
 
             simpleServer.route([{
                 method: 'GET',
                 path: '/user',
-                config: {
-                    handler: function (request, reply) {
+                options: {
+                    handler: (request, h) => {
 
-                        return reply(user);
+                        return user;
                     },
                     response: {
                         schema: testResponseSchema
@@ -76,10 +78,10 @@ describe('Hapi csv', () => {
             {
                 method: 'POST',
                 path: '/user',
-                config: {
-                    handler: function (request, reply) {
+                options: {
+                    handler: (request, h) => {
 
-                        return reply(postUser);
+                        return postUser;
                     },
                     response: {
                         schema: testPostResponseSchema
@@ -88,225 +90,197 @@ describe('Hapi csv', () => {
             }, {
                 method: 'GET',
                 path: '/userWithoutSchema',
-                config: {
-                    handler: function (request, reply) {
+                handler: (request, h) => {
 
-                        return reply(user);
-                    }
+                    return user;
                 }
             }, {
                 method: 'GET',
                 path: '/error',
-                config: {
-                    handler: function (request, reply) {
+                handler: (request, h) => {
 
-                        return reply(new Error());
-                    }
+                    return new Error();
                 }
             }]);
 
-            return simpleServer.register({
-                register: HapiCsv
-            }, (err) => {
-
-                expect(err, 'error').to.not.exist();
-
-                // initialize is needed for hapi-csv route mapping to trigger
-                return simpleServer.initialize((err) => {
-
-                    expect(err, 'error').to.not.exist();
-
-                    return done();
+            try {
+                await simpleServer.register({
+                    plugin: HapiCsv
                 });
-            });
+            }
+            catch (e) {
+                err = e;
+            }
+
+            expect(err, 'error').to.not.exist();
+            let err2;
+
+            try {
+                // initialize is needed for hapi-csv route mapping to trigger
+                await simpleServer.initialize();
+            }
+            catch (e) {
+                err2 = e;
+            }
+
+            expect(err2, 'error').to.not.exist();
         });
 
-        after((done) => {
+        after(async () => {
 
-            return simpleServer.stop(done);
+            await simpleServer.stop();
         });
 
-        it('Converts with text/csv header', (done) => {
+        it('Converts with text/csv header', async () => {
 
-            return simpleServer.inject({
+            const res = await simpleServer.inject({
                 method: 'GET',
                 url: '/user',
                 headers: {
                     'Accept': 'text/csv'
                 }
-            }, (res) => {
-
-                expect(res.result).to.equal(userCSV);
-                expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                expect(res.headers['content-disposition']).to.equal('attachment;');
-
-                return done();
             });
+
+            expect(res.result).to.equal(userCSV);
+            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
         });
 
-        it('Converts with application/csv header', (done) => {
+        it('Converts with application/csv header', async () => {
 
-            return simpleServer.inject({
+            const res = await simpleServer.inject({
                 method: 'GET',
                 url: '/user',
                 headers: {
                     'Accept': 'application/csv'
                 }
-            }, (res) => {
-
-                expect(res.result).to.equal(userCSV);
-                expect(res.headers['content-type']).to.equal('application/csv; charset=utf-8; header=present;');
-                expect(res.headers['content-disposition']).to.equal('attachment;');
-
-                return done();
             });
+
+            expect(res.result).to.equal(userCSV);
+            expect(res.headers['content-type']).to.equal('application/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
         });
 
-        it('Converts when route ends with .csv', (done) => {
+        it('Converts when route ends with .csv', async () => {
 
-            return simpleServer.inject({
+            const res = await simpleServer.inject({
                 method: 'GET',
                 url: '/user.csv'
-            }, (res) => {
-
-                expect(res.result).to.equal(userCSV);
-                expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                expect(res.headers['content-disposition']).to.equal('attachment;');
-
-                return done();
             });
+
+            expect(res.result).to.equal(userCSV);
+            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
         });
 
-        it('Converts when route ends with .csv and has query params', (done) => {
+        it('Converts when route ends with .csv and has query params', async () => {
 
-            return simpleServer.inject({
+            const res = await simpleServer.inject({
                 method: 'GET',
                 url: '/user.csv?q=1'
-            }, (res) => {
-
-                expect(res.result).to.equal(userCSV);
-                expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                expect(res.headers['content-disposition']).to.equal('attachment;');
-                expect(res.request.url.path).to.equal('/user?q=1');
-
-                return done();
             });
+
+            expect(res.result).to.equal(userCSV);
+            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
+            expect(res.request.url.path).to.equal('/user?q=1');
         });
 
-        it('Still replies with JSON when asked', (done) => {
+        it('Still replies with JSON when asked', async () => {
 
-            return simpleServer.inject({
+            const res = await simpleServer.inject({
                 method: 'GET',
                 url: '/user',
                 headers: {
                     Accept: 'application/json'
                 }
-            }, (res) => {
-
-                expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
-                expect(res.result).to.equal(user);
-
-                return done();
             });
+
+            expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
+            expect(res.result).to.equal(user);
         });
 
-        it('Still replies with JSON when no accept header present', (done) => {
+        it('Still replies with JSON when no accept header present', async () => {
 
-            return simpleServer.inject({
+            const res = await simpleServer.inject({
                 method: 'GET',
                 url: '/user',
                 headers: {
                     Accept: ''
                 }
-            }, (res) => {
-
-                expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
-                expect(res.result).to.equal(user);
-
-                return done();
             });
+
+            expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
+            expect(res.result).to.equal(user);
         });
 
-        it('Still replies with JSON when no response schema is specified', (done) => {
+        it('Still replies with JSON when no response schema is specified', async () => {
 
-            return simpleServer.inject({
+            const res = await simpleServer.inject({
                 method: 'GET',
                 url: '/userWithoutSchema',
                 headers: {
                     Accept: 'text/csv'
                 }
-            }, (res) => {
-
-                expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
-                expect(res.result).to.equal(user);
-
-                return done();
             });
+
+            expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
+            expect(res.result).to.equal(user);
         });
 
-        it('Still replies with JSON when Accept header contains wildcard', (done) => {
+        it('Still replies with JSON when Accept header contains wildcard', async () => {
 
-            return simpleServer.inject({
+            const res = await simpleServer.inject({
                 method: 'GET',
                 url: '/user',
                 headers: {
                     Accept: 'application/json, */*'
                 }
-            }, (res) => {
-
-                expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
-                expect(res.result).to.equal(user);
-
-                return done();
             });
+
+            expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
+            expect(res.result).to.equal(user);
         });
 
-        it('Passes on errors', (done) => {
+        it('Passes on errors', async () => {
 
-            return simpleServer.inject({
+            const res = await simpleServer.inject({
                 method: 'GET',
                 url: '/error',
                 headers: {
                     Accept: 'text/csv'
                 }
-            }, (res) => {
+            });
 
-                expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
-                expect(res.result).to.equal({
-                    statusCode: 500,
-                    error: 'Internal Server Error',
-                    message: 'An internal server error occurred'
-                });
-
-                return done();
+            expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
+            expect(res.result).to.equal({
+                statusCode: 500,
+                error: 'Internal Server Error',
+                message: 'An internal server error occurred'
             });
         });
 
-        it('Replies with the right response when there are similar routes with different methods', (done) => {
+        it('Replies with the right response when there are similar routes with different methods', async () => {
 
-            return simpleServer.inject({
+            const res = await simpleServer.inject({
                 method: 'POST',
                 url: '/user',
                 headers: {
                     'Accept': 'text/csv'
                 }
-            }, (res) => {
-
-                expect(res.result).to.equal(postUserCSV);
-                expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                expect(res.headers['content-disposition']).to.equal('attachment;');
-
-                return done();
             });
+
+            expect(res.result).to.equal(postUserCSV);
+            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
         });
     });
 
     describe('Advanced conversions', () => {
 
-        it('Converts more advanced, nested schema', (done) => {
+        it('Converts more advanced, nested schema', async () => {
 
             const server = new Hapi.Server();
-            server.connection();
 
             const testResponseSchema = Joi.array().required().items({
                 testObject: Joi.object().keys({
@@ -351,143 +325,172 @@ describe('Hapi csv', () => {
                 }]
             }];
 
-            return server.register(HapiCsv, (err) => {
+            let registrationError;
 
-                expect(err, 'error').to.not.exist();
+            try {
+                await server.register(HapiCsv);
+            }
+            catch (err) {
+                registrationError = err;
+            }
 
-                server.route([{
-                    method: 'GET',
-                    path: '/test',
-                    config: {
-                        handler: function (request, reply) {
+            expect(registrationError, 'error').to.not.exist();
 
-                            return reply(dataset);
-                        },
-                        response: {
-                            schema: testResponseSchema
-                        }
+            server.route([{
+                method: 'GET',
+                path: '/test',
+                options: {
+                    handler: function (request, h) {
+
+                        return dataset;
+                    },
+                    response: {
+                        schema: testResponseSchema
                     }
-                }]);
+                }
+            }]);
 
-                return server.initialize((err) => {
+            let initializeError;
 
-                    expect(err, 'error').to.not.exist();
+            try {
+                await server.initialize();
+            }
+            catch (err) {
+                initializeError = err;
+            }
 
-                    return server.inject({
-                        method: 'GET',
-                        url: '/test',
-                        headers: {
-                            'Accept': 'text/csv'
-                        }
-                    }, (res) => {
+            expect(initializeError, 'error').to.not.exist();
 
-                        const expectedResult = 'testObject.testPropOne,testObject.testPropTwo,testObject.testPropThree,testNumber,testString,testEmail,testDate,testDateObject,testArray_0.testPropOne,testArray_0.testPropTwo,testArray_1.testPropOne,testArray_1.testPropTwo,testArray_2.testPropOne,testArray_2.testPropTwo,testArray_3.testPropOne,testArray_3.testPropTwo,testArray_4.testPropOne,testArray_4.testPropTwo,testPrimitiveArray_0,testPrimitiveArray_1,testPrimitiveArray_2,testPrimitiveArray_3,testPrimitiveArray_4,\n,,,"5","test","test@testprovider.com","2016-07-04T13:56:31.000Z","2016-07-04T13:56:31.000Z","1","One","2","Two","3","Three","4","Four",,,"5","5",,,,';
-
-                        expect(res.result).to.equal(expectedResult);
-                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                        expect(res.headers['content-disposition']).to.equal('attachment;');
-
-                        return server.stop(done);
-                    });
-                });
+            const res = await server.inject({
+                method: 'GET',
+                url: '/test',
+                headers: {
+                    'Accept': 'text/csv'
+                }
             });
+
+            const expectedResult = 'testObject.testPropOne,testObject.testPropTwo,testObject.testPropThree,testNumber,testString,testEmail,testDate,testDateObject,testArray_0.testPropOne,testArray_0.testPropTwo,testArray_1.testPropOne,testArray_1.testPropTwo,testArray_2.testPropOne,testArray_2.testPropTwo,testArray_3.testPropOne,testArray_3.testPropTwo,testArray_4.testPropOne,testArray_4.testPropTwo,testPrimitiveArray_0,testPrimitiveArray_1,testPrimitiveArray_2,testPrimitiveArray_3,testPrimitiveArray_4,\n,,,"5","test","test@testprovider.com","2016-07-04T13:56:31.000Z","2016-07-04T13:56:31.000Z","1","One","2","Two","3","Three","4","Four",,,"5","5",,,,';
+
+            expect(res.result).to.equal(expectedResult);
+            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
+
+            return server.stop();
         });
 
-        it('Test plugin with schema existing of primitive type', (done) => {
+        it('Test plugin with schema existing of primitive type', async () => {
 
             const server = new Hapi.Server();
-            server.connection();
+            let registrationError;
 
-            return server.register(HapiCsv, (err) => {
+            try {
+                await server.register(HapiCsv);
+            }
+            catch (err) {
+                registrationError = err;
+            }
 
-                expect(err, 'error').to.not.exist();
+            expect(registrationError, 'error').to.not.exist();
 
-                server.route([{
-                    method: 'GET',
-                    path: '/test',
-                    config: {
-                        handler: function (request, reply) {
+            server.route([{
+                method: 'GET',
+                path: '/test',
+                options: {
+                    handler: function (request, h) {
 
-                            return reply(5);
-                        },
-                        response: {
-                            schema: Joi.number()
-                        }
+                        return 5;
+                    },
+                    response: {
+                        schema: Joi.number()
                     }
-                }]);
+                }
+            }]);
 
-                return server.initialize((err) => {
+            let initializeError;
 
-                    expect(err, 'error').to.not.exist();
+            try {
+                await server.initialize();
+            }
+            catch (err) {
+                initializeError = err;
+            }
 
-                    return server.inject({
-                        method: 'GET',
-                        url: '/test',
-                        headers: {
-                            'Accept': 'text/csv'
-                        }
-                    }, (res) => {
+            expect(initializeError, 'error').to.not.exist();
 
-                        expect(res.result).to.equal(5);
-                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                        expect(res.headers['content-disposition']).to.equal('attachment;');
-
-                        return server.stop(done);
-                    });
-                });
+            const res = await server.inject({
+                method: 'GET',
+                url: '/test',
+                headers: {
+                    'Accept': 'text/csv'
+                }
             });
+
+            expect(res.result).to.equal(5);
+            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
+
+            return server.stop();
         });
 
-        it('Parse a value containing embedded double quotes', (done) => {
+        it('Parse a value containing embedded double quotes', async () => {
 
             const server = new Hapi.Server();
-            server.connection();
+            let registrationError;
 
-            return server.register(HapiCsv, (err) => {
+            try {
+                await server.register(HapiCsv);
+            }
+            catch (err) {
+                registrationError = err;
+            }
 
-                expect(err, 'error').to.not.exist();
+            expect(registrationError, 'error').to.not.exist();
 
-                server.route([{
-                    method: 'GET',
-                    path: '/test',
-                    config: {
-                        handler: function (request, reply) {
+            server.route([{
+                method: 'GET',
+                path: '/test',
+                options: {
+                    handler: function (request, h) {
 
-                            return reply('I said: "Hello"');
-                        },
-                        response: {
-                            schema: Joi.string()
-                        }
+                        return 'I said: "Hello"';
+                    },
+                    response: {
+                        schema: Joi.string()
                     }
-                }]);
+                }
+            }]);
 
-                return server.initialize((err) => {
+            let initializeError;
 
-                    expect(err, 'error').to.not.exist();
+            try {
+                await server.initialize();
+            }
+            catch (err) {
+                initializeError = err;
+            }
 
-                    return server.inject({
-                        method: 'GET',
-                        url: '/test',
-                        headers: {
-                            'Accept': 'text/csv'
-                        }
-                    }, (res) => {
+            expect(initializeError, 'error').to.not.exist();
 
-                        expect(res.result).to.equal('I said: ""Hello""');
-                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                        expect(res.headers['content-disposition']).to.equal('attachment;');
-
-                        return server.stop(done);
-                    });
-                });
+            const res = await server.inject({
+                method: 'GET',
+                url: '/test',
+                headers: {
+                    'Accept': 'text/csv'
+                }
             });
+
+            expect(res.result).to.equal('I said: ""Hello""');
+            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
+
+            return server.stop();
         });
     });
 
     // todo add array depth test
     describe('Options', () => {
 
-        it('Uses the passed options', (done) => {
+        it('Uses the passed options', async () => {
 
             const user = {
                 first_name: 'firstName',
@@ -498,63 +501,72 @@ describe('Hapi csv', () => {
             const userCSV = 'first_name+last_name+age+tags_0+\n"firstName"+"lastName"+"25"+"person"+';
 
             const server = new Hapi.Server();
-            server.connection();
+            let registrationError;
 
-            return server.register({
-                register: HapiCsv,
-                options: {
-                    separator: '+',
-                    maximumElementsInArray: '1'
-                }
-            }, (err) => {
-
-                expect(err, 'error').to.not.exist();
-
-                server.route([{
-                    method: 'GET',
-                    path: '/test',
-                    config: {
-                        handler: function (request, reply) {
-
-                            return reply(user);
-                        },
-                        response: {
-                            schema: Joi.object().keys({
-                                first_name: Joi.string(),
-                                last_name: Joi.string(),
-                                age: Joi.number(),
-                                tags: Joi.array().items(Joi.string())
-                            })
-                        }
+            try {
+                await server.register({
+                    plugin: HapiCsv,
+                    options: {
+                        separator: '+',
+                        maximumElementsInArray: '1'
                     }
-                }]);
-
-                return server.initialize((err) => {
-
-                    expect(err, 'error').to.not.exist();
-
-                    return server.inject({
-                        method: 'GET',
-                        url: '/test',
-                        headers: {
-                            'Accept': 'text/csv'
-                        }
-                    }, (res) => {
-
-                        expect(res.result, 'result').to.equal(userCSV);
-                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                        expect(res.headers['content-disposition']).to.equal('attachment;');
-
-                        return server.stop(done);
-                    });
                 });
+            }
+            catch (err) {
+                registrationError = err;
+            }
+
+            expect(registrationError, 'error').to.not.exist();
+
+            server.route([{
+                method: 'GET',
+                path: '/test',
+                options: {
+                    handler: function (request, h) {
+
+                        return user;
+                    },
+                    response: {
+                        schema: Joi.object().keys({
+                            first_name: Joi.string(),
+                            last_name: Joi.string(),
+                            age: Joi.number(),
+                            tags: Joi.array().items(Joi.string())
+                        })
+                    }
+                }
+            }]);
+
+            let initializeError;
+
+            try {
+                await server.initialize();
+            }
+            catch (err) {
+                initializeError = err;
+            }
+
+            expect(initializeError, 'error').to.not.exist();
+
+            const res = await server.inject({
+                method: 'GET',
+                url: '/test',
+                headers: {
+                    'Accept': 'text/csv'
+                }
             });
+
+            expect(res.result, 'result').to.equal(userCSV);
+            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
+
+            return server.stop();
         });
     });
 
     describe('Dynamic schemas', () => {
 
-        it('Uses dynamic schemas', (done) => {
+        it('Uses dynamic schemas', async () => {
 
             const user = {
                 first_name: 'firstName',
@@ -566,69 +578,78 @@ describe('Hapi csv', () => {
             const userCSV = 'first_name,last_name,age,tag.id,tag.name,\n"firstName","lastName","25","1","guitar",';
 
             const server = new Hapi.Server();
-            server.connection();
+            let registrationError;
 
-            return server.register({
-                register: HapiCsv
-            }, (err) => {
+            try {
+                await server.register({
+                    plugin: HapiCsv
+                });
+            }
+            catch (err) {
+                registrationError = err;
+            }
 
-                expect(err, 'error').to.not.exist();
+            expect(registrationError, 'error').to.not.exist();
 
-                server.route([{
-                    method: 'GET',
-                    path: '/test',
-                    config: {
-                        handler: function (request, reply) {
+            server.route([{
+                method: 'GET',
+                path: '/test',
+                options: {
+                    handler: function (request, h) {
 
-                            return reply(user);
-                        },
-                        response: {
-                            schema: Joi.object().keys({
-                                first_name: Joi.string(),
-                                last_name: Joi.string(),
-                                age: Joi.number(),
-                                tag: Joi.object()
-                            })
-                        },
-                        plugins: {
-                            'hapi-csv': {
-                                'tag': (request, callback) => {
+                        return user;
+                    },
+                    response: {
+                        schema: Joi.object().keys({
+                            first_name: Joi.string(),
+                            last_name: Joi.string(),
+                            age: Joi.number(),
+                            tag: Joi.object()
+                        })
+                    },
+                    plugins: {
+                        'hapi-csv': {
+                            'tag': (request) => {
 
-                                    const schema = Joi.object().keys({
-                                        id: Joi.number(),
-                                        name: Joi.string()
-                                    });
+                                const schema = Joi.object().keys({
+                                    id: Joi.number(),
+                                    name: Joi.string()
+                                });
 
-                                    return callback(null, schema);
-                                }
+                                return Promise.resolve(schema);
                             }
                         }
                     }
-                }]);
+                }
+            }]);
 
-                return server.initialize((err) => {
+            let initializeError;
 
-                    expect(err, 'error').to.not.exist();
+            try {
+                await server.initialize();
+            }
+            catch (err) {
+                initializeError = err;
+            }
 
-                    return server.inject({
-                        method: 'GET',
-                        url: '/test',
-                        headers: {
-                            'Accept': 'text/csv'
-                        }
-                    }, (res) => {
+            expect(initializeError, 'error').to.not.exist();
 
-                        expect(res.result, 'result').to.equal(userCSV);
-                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                        expect(res.headers['content-disposition']).to.equal('attachment;');
-
-                        return server.stop(done);
-                    });
-                });
+            const res = await server.inject({
+                method: 'GET',
+                url: '/test',
+                headers: {
+                    'Accept': 'text/csv'
+                }
             });
+
+            expect(res.result, 'result').to.equal(userCSV);
+            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
+
+            return server.stop();
         });
 
-        it('Uses dynamic schemas: resolver function throws an error', (done) => {
+        it('Uses dynamic schemas: resolver function throws an error', async () => {
 
             const user = {
                 first_name: 'firstName',
@@ -638,65 +659,74 @@ describe('Hapi csv', () => {
             };
 
             const server = new Hapi.Server();
-            server.connection();
+            let registrationError;
 
-            return server.register({
-                register: HapiCsv
-            }, (err) => {
+            try {
+                await server.register({
+                    plugin: HapiCsv
+                });
+            }
+            catch (err) {
+                registrationError = err;
+            }
 
-                expect(err, 'error').to.not.exist();
+            expect(registrationError, 'error').to.not.exist();
 
-                server.route([{
-                    method: 'GET',
-                    path: '/test',
-                    config: {
-                        handler: function (request, reply) {
+            server.route([{
+                method: 'GET',
+                path: '/test',
+                options: {
+                    handler: function (request, h) {
 
-                            return reply(user);
-                        },
-                        response: {
-                            schema: Joi.object().keys({
-                                first_name: Joi.string(),
-                                last_name: Joi.string(),
-                                age: Joi.number(),
-                                tag: Joi.object()
-                            })
-                        },
-                        plugins: {
-                            'hapi-csv': {
-                                'tag': (request, callback) => {
+                        return user;
+                    },
+                    response: {
+                        schema: Joi.object().keys({
+                            first_name: Joi.string(),
+                            last_name: Joi.string(),
+                            age: Joi.number(),
+                            tag: Joi.object()
+                        })
+                    },
+                    plugins: {
+                        'hapi-csv': {
+                            'tag': (request) => {
 
-                                    return callback(new Error('ERROR'));
-                                }
+                                return Promise.reject(new Error('ERROR'));
                             }
                         }
                     }
-                }]);
+                }
+            }]);
 
-                return server.initialize((err) => {
+            let initializeError;
 
-                    expect(err, 'error').to.not.exist();
+            try {
+                await server.initialize();
+            }
+            catch (err) {
+                initializeError = err;
+            }
 
-                    return server.inject({
-                        method: 'GET',
-                        url: '/test',
-                        headers: {
-                            'Accept': 'text/csv'
-                        }
-                    }, (res) => {
+            expect(initializeError, 'error').to.not.exist();
 
-                        expect(res.statusCode, 'statusCode').to.equal(500);
-
-                        return server.stop(done);
-                    });
-                });
+            const res = await server.inject({
+                method: 'GET',
+                url: '/test',
+                headers: {
+                    'Accept': 'text/csv'
+                }
             });
+
+            expect(res.statusCode, 'statusCode').to.equal(500);
+
+            return server.stop();
         });
     });
 
     describe('Result key (e.g. for pagination)', () => {
 
-        it('Uses the result key', (done) => {
+        it('Uses the result key', async () => {
 
             const result = {
                 page: 1,
@@ -714,63 +744,72 @@ describe('Hapi csv', () => {
             const userCSV = 'first_name,last_name,age,\n"firstName1","lastName1","25",\n"firstName2","lastName2","27",';
 
             const server = new Hapi.Server();
-            server.connection();
+            let registrationError;
 
-            return server.register({
-                register: HapiCsv,
-                options: {
-                    resultKey: 'items'
-                }
-            }, (err) => {
-
-                expect(err, 'error').to.not.exist();
-
-                server.route([{
-                    method: 'GET',
-                    path: '/test',
-                    config: {
-                        handler: function (request, reply) {
-
-                            return reply(result);
-                        },
-                        response: {
-                            schema: Joi.object({
-                                page: Joi.number(),
-                                items: Joi.array().items(
-                                    Joi.object().keys({
-                                        first_name: Joi.string(),
-                                        last_name: Joi.string(),
-                                        age: Joi.number()
-                                    })
-                                )
-                            })
-                        }
+            try {
+                await server.register({
+                    plugin: HapiCsv,
+                    options: {
+                        resultKey: 'items'
                     }
-                }]);
-
-                return server.initialize((err) => {
-
-                    expect(err, 'error').to.not.exist();
-
-                    return server.inject({
-                        method: 'GET',
-                        url: '/test',
-                        headers: {
-                            'Accept': 'text/csv'
-                        }
-                    }, (res) => {
-
-                        expect(res.result, 'result').to.equal(userCSV);
-                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                        expect(res.headers['content-disposition']).to.equal('attachment;');
-
-                        return server.stop(done);
-                    });
                 });
+            }
+            catch (err) {
+                registrationError = err;
+            }
+
+            expect(registrationError, 'error').to.not.exist();
+
+            server.route([{
+                method: 'GET',
+                path: '/test',
+                options: {
+                    handler: function (request, h) {
+
+                        return result;
+                    },
+                    response: {
+                        schema: Joi.object({
+                            page: Joi.number(),
+                            items: Joi.array().items(
+                                Joi.object().keys({
+                                    first_name: Joi.string(),
+                                    last_name: Joi.string(),
+                                    age: Joi.number()
+                                })
+                            )
+                        })
+                    }
+                }
+            }]);
+
+            let initializeError;
+
+            try {
+                await server.initialize();
+            }
+            catch (err) {
+                initializeError = err;
+            }
+
+            expect(initializeError, 'error').to.not.exist();
+
+            const res = await server.inject({
+                method: 'GET',
+                url: '/test',
+                headers: {
+                    'Accept': 'text/csv'
+                }
             });
+
+            expect(res.result, 'result').to.equal(userCSV);
+            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
+
+            return server.stop();
         });
 
-        it('Ignores the result key if not used in the response', (done) => {
+        it('Ignores the result key if not used in the response', async () => {
 
             const result = [{
                 first_name: 'firstName1',
@@ -785,57 +824,66 @@ describe('Hapi csv', () => {
             const userCSV = 'first_name,last_name,age,\n"firstName1","lastName1","25",\n"firstName2","lastName2","27",';
 
             const server = new Hapi.Server();
-            server.connection();
+            let registrationError;
 
-            return server.register({
-                register: HapiCsv,
-                options: {
-                    resultKey: 'items'
-                }
-            }, (err) => {
-
-                expect(err, 'error').to.not.exist();
-
-                server.route([{
-                    method: 'GET',
-                    path: '/test',
-                    config: {
-                        handler: function (request, reply) {
-
-                            return reply(result);
-                        },
-                        response: {
-                            schema: Joi.array().items(
-                                Joi.object().keys({
-                                    first_name: Joi.string(),
-                                    last_name: Joi.string(),
-                                    age: Joi.number()
-                                })
-                            )
-                        }
+            try {
+                await server.register({
+                    plugin: HapiCsv,
+                    options: {
+                        resultKey: 'items'
                     }
-                }]);
-
-                return server.initialize((err) => {
-
-                    expect(err, 'error').to.not.exist();
-
-                    return server.inject({
-                        method: 'GET',
-                        url: '/test',
-                        headers: {
-                            'Accept': 'text/csv'
-                        }
-                    }, (res) => {
-
-                        expect(res.result, 'result').to.equal(userCSV);
-                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                        expect(res.headers['content-disposition']).to.equal('attachment;');
-
-                        return server.stop(done);
-                    });
                 });
+            }
+            catch (err) {
+                registrationError = err;
+            }
+
+            expect(registrationError, 'error').to.not.exist();
+
+            server.route([{
+                method: 'GET',
+                path: '/test',
+                options: {
+                    handler: function (request, h) {
+
+                        return result;
+                    },
+                    response: {
+                        schema: Joi.array().items(
+                            Joi.object().keys({
+                                first_name: Joi.string(),
+                                last_name: Joi.string(),
+                                age: Joi.number()
+                            })
+                        )
+                    }
+                }
+            }]);
+
+            let initializeError;
+
+            try {
+                await server.initialize();
+            }
+            catch (err) {
+                initializeError = err;
+            }
+
+            expect(initializeError, 'error').to.not.exist();
+
+            const res = await server.inject({
+                method: 'GET',
+                url: '/test',
+                headers: {
+                    'Accept': 'text/csv'
+                }
             });
+
+            expect(res.result, 'result').to.equal(userCSV);
+            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
+
+            return server.stop();
         });
     });
 });

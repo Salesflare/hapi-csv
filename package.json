@@ -20,21 +20,20 @@
   "author": "Salesflare Team",
   "license": "MIT",
   "dependencies": {
-    "async": "^2.6.1",
     "hoek": "5.x.x"
   },
   "devDependencies": {
     "code": "4.x.x",
-    "hapi": "^16.6.3",
-    "joi": "^13.0.0",
-    "lab": "^14.3.4"
+    "hapi": "^17.8.1",
+    "joi": "^14.3.0",
+    "lab": "^18.0.0"
   },
   "peerDependencies": {
-    "hapi": ">=16.1.1",
+    "hapi": ">=17.0.0",
     "joi": ">=10.x.x"
   },
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=8.13.0"
   },
   "bugs": {
     "url": "https://github.com/Salesflare/hapi-csv/issues"

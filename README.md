@@ -11,18 +11,19 @@ Converts the response to csv based on the Joi response schema when the Accept he
 Register the hapi-csv plugin on the server
 
 ```javascript
-server.register({
-    register: require('hapi-csv'),
-    options: {
-        maximumElementsInArray: 5,
-        separator: ',',
-        resultKey: 'items'
-    }
-}, function (err) {
-
-    if (err) throw err;
+try {
+    await server.register({
+        plugin: require('hapi-csv'),
+        options: {
+            maximumElementsInArray: 5,
+            separator: ',',
+            resultKey: 'items'
+        }
+    });
+}
+catch (err) {
     ...
-});
+}
 ```
 
 When you have a route on which a response schema is defined, like in the example below, the plugin will convert the response to csv when the Accept header includes `text/csv` or `application/csv` or the requested route ends with `.csv`
@@ -33,7 +34,7 @@ const routes = [{
     method: 'GET',
     path: '/users',
     handler: Users.getAll,
-    config: {
+    options: {
         response: {
             schema: Joi.object().keys({
                 first_name: Joi.string(),
@@ -68,16 +69,17 @@ To handle typical pagination responses pass the `resultKey` option. The value is
 ```
 
 ```javascript
-server.register({
-    register: require('hapi-csv'),
-    options: {
-        resultKey: 'items' // We only want the `items` in csv
-    }
-}, function (err) {
-
-    if (err) throw err;
+try {
+    await server.register({
+        plugin: require('hapi-csv'),
+        options: {
+            resultKey: 'items' // We only want the `items` in csv
+        }
+    });
+}
+catch (err) {
     ...
-});
+}
 ```
 
 ### Dynamic schemas
@@ -89,9 +91,17 @@ On the route config set the plugin config to an object like
 
 ```javascript
 {
-    'keyPath': (request, callback) => {
+    'keyPath': async (request) => {
+        await ...
 
-        return callback(/* Error, Joi schema */)
+        return /* Error, Joi schema */;
+    }
+    // OR this version if you don't have any async code:
+    'keyPath': (request) => {
+        ...
+
+        return Promise.resolve(/* Joi schema */);
+        // return Promise.reject(new Error(...));
     }
 }
 ```
@@ -116,7 +126,7 @@ Full example:
 ```javascript
 server.route([{
     ...,
-    config: {
+    options: {
         ...,
         response: {
             schema: Joi.object().keys({
@@ -131,18 +141,18 @@ server.route([{
         },
         plugins: {
             'hapi-csv': {
-                'custom': (request, callback) => {
+                'custom': (request) => {
 
                     const schema = Joi.object().keys({
                         id: Joi.number(),
                         name: Joi.string()
                     });
 
-                    return callback(null, schema);
+                    return Promise.resolve(schema);
                 },
-                'deepCustom.deepestCustom': (request, callback) => {
+                'deepCustom.deepestCustom': (request) => {
 
-                    return callback(new Error('nope'));
+                    return Promise.reject(new Error('nope'));
                 }
             }
         }
