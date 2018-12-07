@@ -35,7 +35,7 @@
     "joi": ">=10.x.x"
   },
   "engines": {
-    "node": ">=6.0.0"
+    "node": ">=8.0.0"
   },
   "bugs": {
     "url": "https://github.com/Salesflare/hapi-csv/issues"
