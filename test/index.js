@@ -990,7 +990,7 @@ describe('Hapi csv', () => {
 
                     return server.inject({
                         method: 'GET',
-                        url: '/test',
+                        url: '/test.xlsx',
                         headers: {
                             'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
                         }
@@ -998,6 +998,202 @@ describe('Hapi csv', () => {
 
                         expect(res.payload, 'payload').to.include(expectedString);
                         expect(res.headers['content-type']).to.equal('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8; header=present;');
+
+                        return server.stop(done);
+                    });
+                });
+            });
+        });
+
+        it('Transforms the response to an xlsx format', (done) => {
+
+            const result = {
+                first_name: null,
+                last_name: 'lastName',
+                age: 27
+            };
+
+            const expectedString = '<si><t>first_name</t></si><si><t>last_name</t></si><si><t>age</t></si><si><t>lastName</t></si>';
+
+            const server = new Hapi.Server();
+            server.connection();
+
+            return server.register({
+                register: HapiCsv,
+                options: {
+                    resultKey: 'items',
+                    enableExcel: true
+                }
+            }, (err) => {
+
+                expect(err, 'error').to.not.exist();
+
+                server.route([{
+                    method: 'GET',
+                    path: '/test',
+                    config: {
+                        handler: function (request, reply) {
+
+                            return reply(result);
+                        },
+                        response: {
+                            schema: Joi.array().items(
+                                Joi.object().keys({
+                                    first_name: Joi.string().allow(null),
+                                    last_name: Joi.string(),
+                                    age: Joi.number()
+                                })
+                            ).single()
+                        }
+                    }
+                }]);
+
+                return server.initialize((err) => {
+
+                    expect(err, 'error').to.not.exist();
+
+                    return server.inject({
+                        method: 'GET',
+                        url: '/test.xlsx',
+                        headers: {
+                            'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        }
+                    }, (res) => {
+
+                        expect(res.payload, 'payload').to.include(expectedString);
+                        expect(res.headers['content-type']).to.equal('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8; header=present;');
+
+                        return server.stop(done);
+                    });
+                });
+            });
+        });
+
+        it('Ignores the xlsx when enableExcel is false', (done) => {
+
+            const result = [{
+                first_name: 'firstName1',
+                last_name: 'lastName1',
+                age: 25
+            }, {
+                first_name: 'firstName2',
+                last_name: 'lastName2',
+                age: 27
+            }];
+
+            const server = new Hapi.Server();
+            server.connection();
+
+            return server.register({
+                register: HapiCsv,
+                options: {
+                    resultKey: 'items',
+                    enableExcel: false
+                }
+            }, (err) => {
+
+                expect(err, 'error').to.not.exist();
+
+                server.route([{
+                    method: 'GET',
+                    path: '/test',
+                    config: {
+                        handler: function (request, reply) {
+
+                            return reply(result);
+                        },
+                        response: {
+                            schema: Joi.array().items(
+                                Joi.object().keys({
+                                    first_name: Joi.string(),
+                                    last_name: Joi.string(),
+                                    age: Joi.number()
+                                })
+                            )
+                        }
+                    }
+                }]);
+
+                return server.initialize((err) => {
+
+                    expect(err, 'error').to.not.exist();
+
+                    return server.inject({
+                        method: 'GET',
+                        url: '/test',
+                        headers: {
+                            'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        }
+                    }, (res) => {
+
+                        expect(res.statusCode, 'statusCode').to.equal(200);
+                        expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
+
+                        return server.stop(done);
+                    });
+                });
+            });
+        });
+
+        it('Ignores the xlsx when there is no xlsx extension or xlsx accept header', (done) => {
+
+            const result = [{
+                first_name: 'firstName1',
+                last_name: 'lastName1',
+                age: 25
+            }, {
+                first_name: 'firstName2',
+                last_name: 'lastName2',
+                age: 27
+            }];
+
+            const server = new Hapi.Server();
+            server.connection();
+
+            return server.register({
+                register: HapiCsv,
+                options: {
+                    resultKey: 'items',
+                    enableExcel: true
+                }
+            }, (err) => {
+
+                expect(err, 'error').to.not.exist();
+
+                server.route([{
+                    method: 'GET',
+                    path: '/test',
+                    config: {
+                        handler: function (request, reply) {
+
+                            return reply(result);
+                        },
+                        response: {
+                            schema: Joi.array().items(
+                                Joi.object().keys({
+                                    first_name: Joi.string(),
+                                    last_name: Joi.string(),
+                                    age: Joi.number()
+                                })
+                            )
+                        }
+                    }
+                }]);
+
+                return server.initialize((err) => {
+
+                    expect(err, 'error').to.not.exist();
+
+                    return server.inject({
+                        method: 'GET',
+                        url: '/test',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    }, (res) => {
+
+                        expect(res.statusCode, 'statusCode').to.equal(200);
+                        expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
 
                         return server.stop(done);
                     });
