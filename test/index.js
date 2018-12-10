@@ -17,18 +17,21 @@ describe('Hapi csv', () => {
 
     describe('Basics', () => {
 
-        it('Registers', (done) => {
+        it('Registers', () => {
 
             const server = new Hapi.Server();
             server.connection();
 
-            server.register({
-                register: HapiCsv
-            }, (err) => {
+            return new Promise((resolve) => {
 
-                expect(err, 'error').to.not.exists();
+                return server.register({
+                    register: HapiCsv
+                }, (err) => {
 
-                return done();
+                    expect(err, 'error').to.not.exists();
+
+                    return resolve();
+                });
             });
         });
     });
@@ -55,7 +58,7 @@ describe('Hapi csv', () => {
             first_name: Joi.string()
         })).single();
 
-        before((done) => {
+        before(() => {
 
             simpleServer = new Hapi.Server();
             simpleServer.connection();
@@ -105,205 +108,248 @@ describe('Hapi csv', () => {
                 }
             }]);
 
-            return simpleServer.register({
-                register: HapiCsv
-            }, (err) => {
+            return new Promise((resolve) => {
 
-                expect(err, 'error').to.not.exist();
-
-                // initialize is needed for hapi-csv route mapping to trigger
-                return simpleServer.initialize((err) => {
+                return simpleServer.register({
+                    register: HapiCsv
+                }, (err) => {
 
                     expect(err, 'error').to.not.exist();
 
-                    return done();
+                    // initialize is needed for hapi-csv route mapping to trigger
+                    return simpleServer.initialize((err) => {
+
+                        expect(err, 'error').to.not.exist();
+
+                        return resolve();
+                    });
                 });
             });
         });
 
-        after((done) => {
+        after(() => {
 
-            return simpleServer.stop(done);
-        });
+            return new Promise((resolve, reject) => {
 
-        it('Converts with text/csv header', (done) => {
+                return simpleServer.stop((err) => {
 
-            return simpleServer.inject({
-                method: 'GET',
-                url: '/user',
-                headers: {
-                    'Accept': 'text/csv'
-                }
-            }, (res) => {
+                    if (err) {
+                        return reject(err);
+                    }
 
-                expect(res.result).to.equal(userCSV);
-                expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                expect(res.headers['content-disposition']).to.equal('attachment;');
-
-                return done();
-            });
-        });
-
-        it('Converts with application/csv header', (done) => {
-
-            return simpleServer.inject({
-                method: 'GET',
-                url: '/user',
-                headers: {
-                    'Accept': 'application/csv'
-                }
-            }, (res) => {
-
-                expect(res.result).to.equal(userCSV);
-                expect(res.headers['content-type']).to.equal('application/csv; charset=utf-8; header=present;');
-                expect(res.headers['content-disposition']).to.equal('attachment;');
-
-                return done();
-            });
-        });
-
-        it('Converts when route ends with .csv', (done) => {
-
-            return simpleServer.inject({
-                method: 'GET',
-                url: '/user.csv'
-            }, (res) => {
-
-                expect(res.result).to.equal(userCSV);
-                expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                expect(res.headers['content-disposition']).to.equal('attachment;');
-
-                return done();
-            });
-        });
-
-        it('Converts when route ends with .csv and has query params', (done) => {
-
-            return simpleServer.inject({
-                method: 'GET',
-                url: '/user.csv?q=1'
-            }, (res) => {
-
-                expect(res.result).to.equal(userCSV);
-                expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                expect(res.headers['content-disposition']).to.equal('attachment;');
-                expect(res.request.url.path).to.equal('/user?q=1');
-
-                return done();
-            });
-        });
-
-        it('Still replies with JSON when asked', (done) => {
-
-            return simpleServer.inject({
-                method: 'GET',
-                url: '/user',
-                headers: {
-                    Accept: 'application/json'
-                }
-            }, (res) => {
-
-                expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
-                expect(res.result).to.equal(user);
-
-                return done();
-            });
-        });
-
-        it('Still replies with JSON when no accept header present', (done) => {
-
-            return simpleServer.inject({
-                method: 'GET',
-                url: '/user',
-                headers: {
-                    Accept: ''
-                }
-            }, (res) => {
-
-                expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
-                expect(res.result).to.equal(user);
-
-                return done();
-            });
-        });
-
-        it('Still replies with JSON when no response schema is specified', (done) => {
-
-            return simpleServer.inject({
-                method: 'GET',
-                url: '/userWithoutSchema',
-                headers: {
-                    Accept: 'text/csv'
-                }
-            }, (res) => {
-
-                expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
-                expect(res.result).to.equal(user);
-
-                return done();
-            });
-        });
-
-        it('Still replies with JSON when Accept header contains wildcard', (done) => {
-
-            return simpleServer.inject({
-                method: 'GET',
-                url: '/user',
-                headers: {
-                    Accept: 'application/json, */*'
-                }
-            }, (res) => {
-
-                expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
-                expect(res.result).to.equal(user);
-
-                return done();
-            });
-        });
-
-        it('Passes on errors', (done) => {
-
-            return simpleServer.inject({
-                method: 'GET',
-                url: '/error',
-                headers: {
-                    Accept: 'text/csv'
-                }
-            }, (res) => {
-
-                expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
-                expect(res.result).to.equal({
-                    statusCode: 500,
-                    error: 'Internal Server Error',
-                    message: 'An internal server error occurred'
+                    return resolve();
                 });
-
-                return done();
             });
         });
 
-        it('Replies with the right response when there are similar routes with different methods', (done) => {
+        it('Converts with text/csv header', () => {
 
-            return simpleServer.inject({
-                method: 'POST',
-                url: '/user',
-                headers: {
-                    'Accept': 'text/csv'
-                }
-            }, (res) => {
+            return new Promise((resolve) => {
 
-                expect(res.result).to.equal(postUserCSV);
-                expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                expect(res.headers['content-disposition']).to.equal('attachment;');
+                return simpleServer.inject({
+                    method: 'GET',
+                    url: '/user',
+                    headers: {
+                        'Accept': 'text/csv'
+                    }
+                }, (res) => {
 
-                return done();
+                    expect(res.result).to.equal(userCSV);
+                    expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+                    expect(res.headers['content-disposition']).to.equal('attachment;');
+
+                    return resolve();
+                });
+            });
+        });
+
+        it('Converts with application/csv header', () => {
+
+            return new Promise((resolve) => {
+
+                return simpleServer.inject({
+                    method: 'GET',
+                    url: '/user',
+                    headers: {
+                        'Accept': 'application/csv'
+                    }
+                }, (res) => {
+
+                    expect(res.result).to.equal(userCSV);
+                    expect(res.headers['content-type']).to.equal('application/csv; charset=utf-8; header=present;');
+                    expect(res.headers['content-disposition']).to.equal('attachment;');
+
+                    return resolve();
+                });
+            });
+        });
+
+        it('Converts when route ends with .csv', () => {
+
+            return new Promise((resolve) => {
+
+                return simpleServer.inject({
+                    method: 'GET',
+                    url: '/user.csv'
+                }, (res) => {
+
+                    expect(res.result).to.equal(userCSV);
+                    expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+                    expect(res.headers['content-disposition']).to.equal('attachment;');
+
+                    return resolve();
+                });
+            });
+        });
+
+        it('Converts when route ends with .csv and has query params', () => {
+
+            return new Promise((resolve) => {
+
+                return simpleServer.inject({
+                    method: 'GET',
+                    url: '/user.csv?q=1'
+                }, (res) => {
+
+                    expect(res.result).to.equal(userCSV);
+                    expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+                    expect(res.headers['content-disposition']).to.equal('attachment;');
+                    expect(res.request.url.path).to.equal('/user?q=1');
+
+                    return resolve();
+                });
+            });
+        });
+
+        it('Still replies with JSON when asked', () => {
+
+            return new Promise((resolve) => {
+
+                return simpleServer.inject({
+                    method: 'GET',
+                    url: '/user',
+                    headers: {
+                        Accept: 'application/json'
+                    }
+                }, (res) => {
+
+                    expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
+                    expect(res.result).to.equal(user);
+
+                    return resolve();
+                });
+            });
+        });
+
+        it('Still replies with JSON when no accept header present', () => {
+
+            return new Promise((resolve) => {
+
+                return simpleServer.inject({
+                    method: 'GET',
+                    url: '/user',
+                    headers: {
+                        Accept: ''
+                    }
+                }, (res) => {
+
+                    expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
+                    expect(res.result).to.equal(user);
+
+                    return resolve();
+                });
+            });
+        });
+
+        it('Still replies with JSON when no response schema is specified', () => {
+
+            return new Promise((resolve) => {
+
+                return simpleServer.inject({
+                    method: 'GET',
+                    url: '/userWithoutSchema',
+                    headers: {
+                        Accept: 'text/csv'
+                    }
+                }, (res) => {
+
+                    expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
+                    expect(res.result).to.equal(user);
+
+                    return resolve();
+                });
+            });
+        });
+
+        it('Still replies with JSON when Accept header contains wildcard', () => {
+
+            return new Promise((resolve) => {
+
+                return simpleServer.inject({
+                    method: 'GET',
+                    url: '/user',
+                    headers: {
+                        Accept: 'application/json, */*'
+                    }
+                }, (res) => {
+
+                    expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
+                    expect(res.result).to.equal(user);
+
+                    return resolve();
+                });
+            });
+        });
+
+        it('Passes on errors', () => {
+
+            return new Promise((resolve) => {
+
+                return simpleServer.inject({
+                    method: 'GET',
+                    url: '/error',
+                    headers: {
+                        Accept: 'text/csv'
+                    }
+                }, (res) => {
+
+                    expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
+                    expect(res.result).to.equal({
+                        statusCode: 500,
+                        error: 'Internal Server Error',
+                        message: 'An internal server error occurred'
+                    });
+
+                    return resolve();
+                });
+            });
+        });
+
+        it('Replies with the right response when there are similar routes with different methods', () => {
+
+            return new Promise((resolve) => {
+
+                return simpleServer.inject({
+                    method: 'POST',
+                    url: '/user',
+                    headers: {
+                        'Accept': 'text/csv'
+                    }
+                }, (res) => {
+
+                    expect(res.result).to.equal(postUserCSV);
+                    expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+                    expect(res.headers['content-disposition']).to.equal('attachment;');
+
+                    return resolve();
+                });
             });
         });
     });
 
     describe('Advanced conversions', () => {
 
-        it('Converts more advanced, nested schema', (done) => {
+        it('Converts more advanced, nested schema', () => {
 
             const server = new Hapi.Server();
             server.connection();
@@ -351,133 +397,163 @@ describe('Hapi csv', () => {
                 }]
             }];
 
-            return server.register(HapiCsv, (err) => {
+            return new Promise((resolve, reject) => {
 
-                expect(err, 'error').to.not.exist();
-
-                server.route([{
-                    method: 'GET',
-                    path: '/test',
-                    config: {
-                        handler: function (request, reply) {
-
-                            return reply(dataset);
-                        },
-                        response: {
-                            schema: testResponseSchema
-                        }
-                    }
-                }]);
-
-                return server.initialize((err) => {
+                return server.register(HapiCsv, (err) => {
 
                     expect(err, 'error').to.not.exist();
 
-                    return server.inject({
+                    server.route([{
                         method: 'GET',
-                        url: '/test',
-                        headers: {
-                            'Accept': 'text/csv'
+                        path: '/test',
+                        config: {
+                            handler: function (request, reply) {
+
+                                return reply(dataset);
+                            },
+                            response: {
+                                schema: testResponseSchema
+                            }
                         }
-                    }, (res) => {
+                    }]);
 
-                        const expectedResult = 'testObject.testPropOne,testObject.testPropTwo,testObject.testPropThree,testNumber,testString,testEmail,testDate,testDateObject,testArray_0.testPropOne,testArray_0.testPropTwo,testArray_1.testPropOne,testArray_1.testPropTwo,testArray_2.testPropOne,testArray_2.testPropTwo,testArray_3.testPropOne,testArray_3.testPropTwo,testArray_4.testPropOne,testArray_4.testPropTwo,testPrimitiveArray_0,testPrimitiveArray_1,testPrimitiveArray_2,testPrimitiveArray_3,testPrimitiveArray_4,\n,,,"5","test","test@testprovider.com","2016-07-04T13:56:31.000Z","2016-07-04T13:56:31.000Z","1","One","2","Two","3","Three","4","Four",,,"5","5",,,,';
+                    return server.initialize((err) => {
 
-                        expect(res.result).to.equal(expectedResult);
-                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                        expect(res.headers['content-disposition']).to.equal('attachment;');
+                        expect(err, 'error').to.not.exist();
 
-                        return server.stop(done);
+                        return server.inject({
+                            method: 'GET',
+                            url: '/test',
+                            headers: {
+                                'Accept': 'text/csv'
+                            }
+                        }, (res) => {
+
+                            const expectedResult = 'testObject.testPropOne,testObject.testPropTwo,testObject.testPropThree,testNumber,testString,testEmail,testDate,testDateObject,testArray_0.testPropOne,testArray_0.testPropTwo,testArray_1.testPropOne,testArray_1.testPropTwo,testArray_2.testPropOne,testArray_2.testPropTwo,testArray_3.testPropOne,testArray_3.testPropTwo,testArray_4.testPropOne,testArray_4.testPropTwo,testPrimitiveArray_0,testPrimitiveArray_1,testPrimitiveArray_2,testPrimitiveArray_3,testPrimitiveArray_4,\n,,,"5","test","test@testprovider.com","2016-07-04T13:56:31.000Z","2016-07-04T13:56:31.000Z","1","One","2","Two","3","Three","4","Four",,,"5","5",,,,';
+
+                            expect(res.result).to.equal(expectedResult);
+                            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+                            expect(res.headers['content-disposition']).to.equal('attachment;');
+
+                            return server.stop((err) => {
+
+                                if (err) {
+                                    return reject(err);
+                                }
+
+                                return resolve();
+                            });
+                        });
                     });
                 });
             });
         });
 
-        it('Test plugin with schema existing of primitive type', (done) => {
+        it('Test plugin with schema existing of primitive type', () => {
 
             const server = new Hapi.Server();
             server.connection();
 
-            return server.register(HapiCsv, (err) => {
+            return new Promise((resolve, reject) => {
 
-                expect(err, 'error').to.not.exist();
-
-                server.route([{
-                    method: 'GET',
-                    path: '/test',
-                    config: {
-                        handler: function (request, reply) {
-
-                            return reply(5);
-                        },
-                        response: {
-                            schema: Joi.number()
-                        }
-                    }
-                }]);
-
-                return server.initialize((err) => {
+                return server.register(HapiCsv, (err) => {
 
                     expect(err, 'error').to.not.exist();
 
-                    return server.inject({
+                    server.route([{
                         method: 'GET',
-                        url: '/test',
-                        headers: {
-                            'Accept': 'text/csv'
+                        path: '/test',
+                        config: {
+                            handler: function (request, reply) {
+
+                                return reply(5);
+                            },
+                            response: {
+                                schema: Joi.number()
+                            }
                         }
-                    }, (res) => {
+                    }]);
 
-                        expect(res.result).to.equal(5);
-                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                        expect(res.headers['content-disposition']).to.equal('attachment;');
+                    return server.initialize((err) => {
 
-                        return server.stop(done);
+                        expect(err, 'error').to.not.exist();
+
+                        return server.inject({
+                            method: 'GET',
+                            url: '/test',
+                            headers: {
+                                'Accept': 'text/csv'
+                            }
+                        }, (res) => {
+
+                            expect(res.result).to.equal(5);
+                            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+                            expect(res.headers['content-disposition']).to.equal('attachment;');
+
+                            return server.stop((err) => {
+
+                                if (err) {
+                                    return reject(err);
+                                }
+
+                                return resolve();
+                            });
+                        });
                     });
                 });
             });
         });
 
-        it('Parse a value containing embedded double quotes', (done) => {
+        it('Parse a value containing embedded double quotes', () => {
 
             const server = new Hapi.Server();
             server.connection();
 
-            return server.register(HapiCsv, (err) => {
+            return new Promise((resolve, reject) => {
 
-                expect(err, 'error').to.not.exist();
-
-                server.route([{
-                    method: 'GET',
-                    path: '/test',
-                    config: {
-                        handler: function (request, reply) {
-
-                            return reply('I said: "Hello"');
-                        },
-                        response: {
-                            schema: Joi.string()
-                        }
-                    }
-                }]);
-
-                return server.initialize((err) => {
+                return server.register(HapiCsv, (err) => {
 
                     expect(err, 'error').to.not.exist();
 
-                    return server.inject({
+                    server.route([{
                         method: 'GET',
-                        url: '/test',
-                        headers: {
-                            'Accept': 'text/csv'
+                        path: '/test',
+                        config: {
+                            handler: function (request, reply) {
+
+                                return reply('I said: "Hello"');
+                            },
+                            response: {
+                                schema: Joi.string()
+                            }
                         }
-                    }, (res) => {
+                    }]);
 
-                        expect(res.result).to.equal('I said: ""Hello""');
-                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                        expect(res.headers['content-disposition']).to.equal('attachment;');
+                    return server.initialize((err) => {
 
-                        return server.stop(done);
+                        expect(err, 'error').to.not.exist();
+
+                        return server.inject({
+                            method: 'GET',
+                            url: '/test',
+                            headers: {
+                                'Accept': 'text/csv'
+                            }
+                        }, (res) => {
+
+                            expect(res.result).to.equal('I said: ""Hello""');
+                            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+                            expect(res.headers['content-disposition']).to.equal('attachment;');
+
+                            return server.stop((err) => {
+
+                                if (err) {
+                                    return reject(err);
+                                }
+
+                                return resolve();
+                            });
+                        });
                     });
                 });
             });
@@ -487,7 +563,7 @@ describe('Hapi csv', () => {
     // todo add array depth test
     describe('Options', () => {
 
-        it('Uses the passed options', (done) => {
+        it('Uses the passed options', () => {
 
             const user = {
                 first_name: 'firstName',
@@ -500,52 +576,62 @@ describe('Hapi csv', () => {
             const server = new Hapi.Server();
             server.connection();
 
-            return server.register({
-                register: HapiCsv,
-                options: {
-                    separator: '+',
-                    maximumElementsInArray: '1'
-                }
-            }, (err) => {
+            return new Promise((resolve, reject) => {
 
-                expect(err, 'error').to.not.exist();
-
-                server.route([{
-                    method: 'GET',
-                    path: '/test',
-                    config: {
-                        handler: function (request, reply) {
-
-                            return reply(user);
-                        },
-                        response: {
-                            schema: Joi.object().keys({
-                                first_name: Joi.string(),
-                                last_name: Joi.string(),
-                                age: Joi.number(),
-                                tags: Joi.array().items(Joi.string())
-                            })
-                        }
+                return server.register({
+                    register: HapiCsv,
+                    options: {
+                        separator: '+',
+                        maximumElementsInArray: '1'
                     }
-                }]);
-
-                return server.initialize((err) => {
+                }, (err) => {
 
                     expect(err, 'error').to.not.exist();
 
-                    return server.inject({
+                    server.route([{
                         method: 'GET',
-                        url: '/test',
-                        headers: {
-                            'Accept': 'text/csv'
+                        path: '/test',
+                        config: {
+                            handler: function (request, reply) {
+
+                                return reply(user);
+                            },
+                            response: {
+                                schema: Joi.object().keys({
+                                    first_name: Joi.string(),
+                                    last_name: Joi.string(),
+                                    age: Joi.number(),
+                                    tags: Joi.array().items(Joi.string())
+                                })
+                            }
                         }
-                    }, (res) => {
+                    }]);
 
-                        expect(res.result, 'result').to.equal(userCSV);
-                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                        expect(res.headers['content-disposition']).to.equal('attachment;');
+                    return server.initialize((err) => {
 
-                        return server.stop(done);
+                        expect(err, 'error').to.not.exist();
+
+                        return server.inject({
+                            method: 'GET',
+                            url: '/test',
+                            headers: {
+                                'Accept': 'text/csv'
+                            }
+                        }, (res) => {
+
+                            expect(res.result, 'result').to.equal(userCSV);
+                            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+                            expect(res.headers['content-disposition']).to.equal('attachment;');
+
+                            return server.stop((err) => {
+
+                                if (err) {
+                                    return reject(err);
+                                }
+
+                                return resolve();
+                            });
+                        });
                     });
                 });
             });
@@ -554,7 +640,7 @@ describe('Hapi csv', () => {
 
     describe('Dynamic schemas', () => {
 
-        it('Uses dynamic schemas', (done) => {
+        it('Uses dynamic schemas', () => {
 
             const user = {
                 first_name: 'firstName',
@@ -568,61 +654,71 @@ describe('Hapi csv', () => {
             const server = new Hapi.Server();
             server.connection();
 
-            return server.register({
-                register: HapiCsv
-            }, (err) => {
+            return new Promise((resolve, reject) => {
 
-                expect(err, 'error').to.not.exist();
-
-                server.route([{
-                    method: 'GET',
-                    path: '/test',
-                    config: {
-                        handler: function (request, reply) {
-
-                            return reply(user);
-                        },
-                        response: {
-                            schema: Joi.object().keys({
-                                first_name: Joi.string(),
-                                last_name: Joi.string(),
-                                age: Joi.number(),
-                                tag: Joi.object()
-                            })
-                        },
-                        plugins: {
-                            'hapi-csv': {
-                                'tag': (request, callback) => {
-
-                                    const schema = Joi.object().keys({
-                                        id: Joi.number(),
-                                        name: Joi.string()
-                                    });
-
-                                    return callback(null, schema);
-                                }
-                            }
-                        }
-                    }
-                }]);
-
-                return server.initialize((err) => {
+                return server.register({
+                    register: HapiCsv
+                }, (err) => {
 
                     expect(err, 'error').to.not.exist();
 
-                    return server.inject({
+                    server.route([{
                         method: 'GET',
-                        url: '/test',
-                        headers: {
-                            'Accept': 'text/csv'
+                        path: '/test',
+                        config: {
+                            handler: function (request, reply) {
+
+                                return reply(user);
+                            },
+                            response: {
+                                schema: Joi.object().keys({
+                                    first_name: Joi.string(),
+                                    last_name: Joi.string(),
+                                    age: Joi.number(),
+                                    tag: Joi.object()
+                                })
+                            },
+                            plugins: {
+                                'hapi-csv': {
+                                    'tag': (request, callback) => {
+
+                                        const schema = Joi.object().keys({
+                                            id: Joi.number(),
+                                            name: Joi.string()
+                                        });
+
+                                        return callback(null, schema);
+                                    }
+                                }
+                            }
                         }
-                    }, (res) => {
+                    }]);
 
-                        expect(res.result, 'result').to.equal(userCSV);
-                        expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
-                        expect(res.headers['content-disposition']).to.equal('attachment;');
+                    return server.initialize((err) => {
 
-                        return server.stop(done);
+                        expect(err, 'error').to.not.exist();
+
+                        return server.inject({
+                            method: 'GET',
+                            url: '/test',
+                            headers: {
+                                'Accept': 'text/csv'
+                            }
+                        }, (res) => {
+
+                            expect(res.result, 'result').to.equal(userCSV);
+                            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+                            expect(res.headers['content-disposition']).to.equal('attachment;');
+
+                            return server.stop((err) => {
+
+                                if (err) {
+                                    return reject(err);
+                                }
+
+                                return resolve();
+                            });
+                        });
                     });
                 });
             });
@@ -831,6 +927,273 @@ describe('Hapi csv', () => {
                         expect(res.result, 'result').to.equal(userCSV);
                         expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
                         expect(res.headers['content-disposition']).to.equal('attachment;');
+
+                        return server.stop(done);
+                    });
+                });
+            });
+        });
+    });
+
+    describe('xlsx export', () => {
+
+        it('Transforms the response to an xlsx format', (done) => {
+
+            const result = [{
+                first_name: 'firstName1',
+                last_name: 'lastName1',
+                age: 25
+            }, {
+                first_name: 'firstName2',
+                last_name: 'lastName2',
+                age: 27
+            }];
+
+            const expectedString = '<si><t>first_name</t></si><si><t>last_name</t></si><si><t>age</t></si><si><t>firstName1</t></si><si><t>lastName1</t></si><si><t>firstName2</t></si><si><t>lastName2</t></si>';
+
+            const server = new Hapi.Server();
+            server.connection();
+
+            return server.register({
+                register: HapiCsv,
+                options: {
+                    resultKey: 'items',
+                    enableExcel: true
+                }
+            }, (err) => {
+
+                expect(err, 'error').to.not.exist();
+
+                server.route([{
+                    method: 'GET',
+                    path: '/test',
+                    config: {
+                        handler: function (request, reply) {
+
+                            return reply(result);
+                        },
+                        response: {
+                            schema: Joi.array().items(
+                                Joi.object().keys({
+                                    first_name: Joi.string(),
+                                    last_name: Joi.string(),
+                                    age: Joi.number()
+                                })
+                            )
+                        }
+                    }
+                }]);
+
+                return server.initialize((err) => {
+
+                    expect(err, 'error').to.not.exist();
+
+                    return server.inject({
+                        method: 'GET',
+                        url: '/test.xlsx',
+                        headers: {
+                            'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        }
+                    }, (res) => {
+
+                        expect(res.payload, 'payload').to.include(expectedString);
+                        expect(res.headers['content-type']).to.equal('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8; header=present;');
+
+                        return server.stop(done);
+                    });
+                });
+            });
+        });
+
+        it('Transforms the response to an xlsx format', (done) => {
+
+            const result = {
+                first_name: null,
+                last_name: 'lastName',
+                age: 27
+            };
+
+            const expectedString = '<si><t>first_name</t></si><si><t>last_name</t></si><si><t>age</t></si><si><t>lastName</t></si>';
+
+            const server = new Hapi.Server();
+            server.connection();
+
+            return server.register({
+                register: HapiCsv,
+                options: {
+                    resultKey: 'items',
+                    enableExcel: true
+                }
+            }, (err) => {
+
+                expect(err, 'error').to.not.exist();
+
+                server.route([{
+                    method: 'GET',
+                    path: '/test',
+                    config: {
+                        handler: function (request, reply) {
+
+                            return reply(result);
+                        },
+                        response: {
+                            schema: Joi.array().items(
+                                Joi.object().keys({
+                                    first_name: Joi.string().allow(null),
+                                    last_name: Joi.string(),
+                                    age: Joi.number()
+                                })
+                            ).single()
+                        }
+                    }
+                }]);
+
+                return server.initialize((err) => {
+
+                    expect(err, 'error').to.not.exist();
+
+                    return server.inject({
+                        method: 'GET',
+                        url: '/test.xlsx',
+                        headers: {
+                            'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        }
+                    }, (res) => {
+
+                        expect(res.payload, 'payload').to.include(expectedString);
+                        expect(res.headers['content-type']).to.equal('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8; header=present;');
+
+                        return server.stop(done);
+                    });
+                });
+            });
+        });
+
+        it('Ignores the xlsx when enableExcel is false', (done) => {
+
+            const result = [{
+                first_name: 'firstName1',
+                last_name: 'lastName1',
+                age: 25
+            }, {
+                first_name: 'firstName2',
+                last_name: 'lastName2',
+                age: 27
+            }];
+
+            const server = new Hapi.Server();
+            server.connection();
+
+            return server.register({
+                register: HapiCsv,
+                options: {
+                    resultKey: 'items',
+                    enableExcel: false
+                }
+            }, (err) => {
+
+                expect(err, 'error').to.not.exist();
+
+                server.route([{
+                    method: 'GET',
+                    path: '/test',
+                    config: {
+                        handler: function (request, reply) {
+
+                            return reply(result);
+                        },
+                        response: {
+                            schema: Joi.array().items(
+                                Joi.object().keys({
+                                    first_name: Joi.string(),
+                                    last_name: Joi.string(),
+                                    age: Joi.number()
+                                })
+                            )
+                        }
+                    }
+                }]);
+
+                return server.initialize((err) => {
+
+                    expect(err, 'error').to.not.exist();
+
+                    return server.inject({
+                        method: 'GET',
+                        url: '/test',
+                        headers: {
+                            'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        }
+                    }, (res) => {
+
+                        expect(res.statusCode, 'statusCode').to.equal(200);
+                        expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
+
+                        return server.stop(done);
+                    });
+                });
+            });
+        });
+
+        it('Ignores the xlsx when there is no xlsx extension or xlsx accept header', (done) => {
+
+            const result = [{
+                first_name: 'firstName1',
+                last_name: 'lastName1',
+                age: 25
+            }, {
+                first_name: 'firstName2',
+                last_name: 'lastName2',
+                age: 27
+            }];
+
+            const server = new Hapi.Server();
+            server.connection();
+
+            return server.register({
+                register: HapiCsv,
+                options: {
+                    resultKey: 'items',
+                    enableExcel: true
+                }
+            }, (err) => {
+
+                expect(err, 'error').to.not.exist();
+
+                server.route([{
+                    method: 'GET',
+                    path: '/test',
+                    config: {
+                        handler: function (request, reply) {
+
+                            return reply(result);
+                        },
+                        response: {
+                            schema: Joi.array().items(
+                                Joi.object().keys({
+                                    first_name: Joi.string(),
+                                    last_name: Joi.string(),
+                                    age: Joi.number()
+                                })
+                            )
+                        }
+                    }
+                }]);
+
+                return server.initialize((err) => {
+
+                    expect(err, 'error').to.not.exist();
+
+                    return server.inject({
+                        method: 'GET',
+                        url: '/test',
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    }, (res) => {
+
+                        expect(res.statusCode, 'statusCode').to.equal(200);
+                        expect(res.headers['content-type']).to.equal('application/json; charset=utf-8');
 
                         return server.stop(done);
                     });
