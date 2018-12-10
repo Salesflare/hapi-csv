@@ -149,3 +149,19 @@ server.route([{
      }
  ])
 ```
+
+### Excel
+
+You can also enable Excel conversion:
+
+```javascript
+server.register({
+    register: require('hapi-csv'),
+    options: {
+        enableExcel: true,
+        excelWriteOptions: { /* compression: false */ }
+    }
+}, ...
+```
+
+`excelWriteOptions` takes anything for [https://github.com/SheetJS/js-xlsx#writing-options](https://github.com/SheetJS/js-xlsx#writing-options)
