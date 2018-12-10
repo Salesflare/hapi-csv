@@ -15,7 +15,10 @@
     "plugin",
     "csv",
     "joi",
-    "schema"
+    "schema",
+    "excel",
+    "convert",
+    "export"
   ],
   "author": "Salesflare Team",
   "license": "MIT",
