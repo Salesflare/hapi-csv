@@ -725,7 +725,7 @@ describe('Hapi csv', () => {
             });
         });
 
-        it('Uses dynamic schemas: resolver function throws an error', (doe) => {
+        it('Uses dynamic schemas: resolver function throws an error', () => {
 
             const user = {
                 first_name: 'firstName',
