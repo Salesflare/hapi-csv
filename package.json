@@ -4,7 +4,7 @@
   "description": "Hapi plugin for converting a Joi response schema and dataset to csv",
   "main": "lib/index.js",
   "scripts": {
-    "test": "lab -a code -vL --lint-fix -t 97 -I cptable"
+    "test": "lab -a code -vL -t 97 -I cptable"
   },
   "repository": {
     "type": "git",
@@ -23,21 +23,20 @@
   "author": "Salesflare Team",
   "license": "MIT",
   "dependencies": {
-    "async": "^2.6.1",
-    "exceljs": "^1.6.3",
-    "fast-csv": "^2.4.1",
-    "hoek": "^6.0.3",
-    "xlsx": "^0.14.1"
+    "@hapi/hoek": "^6.2.1",
+    "exceljs": "^1.10.0",
+    "fast-csv": "^2.5.0",
+    "xlsx": "^0.14.3"
   },
   "devDependencies": {
     "code": "5.x.x",
-    "hapi": "^16.7.0",
-    "joi": "^14.1.0",
-    "lab": "^18.0.1"
+    "hapi": "^18.1.0",
+    "joi": "^14.3.1",
+    "lab": "^18.0.2"
   },
   "peerDependencies": {
-    "hapi": ">=16.1.1",
-    "joi": ">=10.x.x"
+    "hapi": ">=18.1.0",
+    "joi": ">=14.x.x"
   },
   "engines": {
     "node": ">=8.0.0"
