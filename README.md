@@ -2,7 +2,7 @@
 
 ## What
 
-Converts the response to csv based on the Joi response schema when the Accept header includes `text/csv` or `application/csv` or the requested route ends with `.csv`.
+Converts the response to csv based on the Joi response schema when the Accept header includes `text/csv` or `application/csv` or the requested route ends with `.csv`.  
 Converts the response to xlsx (Excel File) when the Accept header includes `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` or the requested route ends with `.xlsx`.  (Beta)
 
 ## How
