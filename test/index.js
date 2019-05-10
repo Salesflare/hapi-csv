@@ -901,6 +901,89 @@ describe('Hapi csv', () => {
         });
     });
 
+    describe('handle cors headers', () => {
+
+        it('Require cors headers to be returned', async () => {
+
+            const result = [{
+                first_name: 'firstName1',
+                last_name: 'lastName1',
+                age: 25
+            }, {
+                first_name: 'firstName2',
+                last_name: 'lastName2',
+                age: 27
+            }];
+
+            const server = new Hapi.Server({
+                routes: {
+                    cors: true
+                }
+            });
+            let registrationError;
+
+            try {
+                await server.register({
+                    plugin: HapiCsv,
+                    options: {
+                        resultKey: 'items'
+                    }
+                });
+            }
+            catch (e) {
+                registrationError = e;
+            }
+
+            expect(registrationError, 'error').to.not.exist();
+
+            server.route([{
+                method: 'GET',
+                path: '/test',
+                options: {
+                    handler: function (request, h) {
+
+                        return result;
+                    },
+                    response: {
+                        schema: Joi.array().items(
+                            Joi.object().keys({
+                                first_name: Joi.string(),
+                                last_name: Joi.string(),
+                                age: Joi.number()
+                            })
+                        )
+                    }
+                }
+            }]);
+
+            let initializeError;
+
+            try {
+                await server.initialize();
+            }
+            catch (err) {
+                initializeError = err;
+            }
+
+            expect(initializeError, 'error').to.not.exist();
+
+            const res = await server.inject({
+                method: 'GET',
+                url: '/test',
+                headers: {
+                    'Accept': 'text/csv'
+                }
+            });
+
+            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
+            expect(res.headers['access-control-allow-origin']).to.equal('*');
+            expect(res.headers['access-control-allow-headers']).to.equal('Accept,Authorization,Content-Type,If-None-Match');
+
+            return server.stop();
+        });
+    });
+
     describe('xlsx export', () => {
 
         it('Transforms the response to an xlsx format', async () => {
