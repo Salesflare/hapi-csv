@@ -2,7 +2,8 @@
 
 ## What
 
-Converts the response to csv based on the Joi response schema when the Accept header includes `text/csv` or `application/csv` or the requested route ends with `.csv`
+Converts the response to csv based on the Joi response schema when the Accept header includes `text/csv` or `application/csv` or the requested route ends with `.csv`.
+Converts the response to xlsx (Excel File) when the Accept header includes `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` or the requested route ends with `.xlsx`.  (Beta)
 
 ## How
 
@@ -11,17 +12,11 @@ Converts the response to csv based on the Joi response schema when the Accept he
 Register the hapi-csv plugin on the server
 
 ```javascript
-server.register({
-    register: require('hapi-csv'),
+await server.register({
+    plugin: require('hapi-csv'),
     options: {
-        maximumElementsInArray: 5,
-        separator: ',',
         resultKey: 'items'
     }
-}, function (err) {
-
-    if (err) throw err;
-    ...
 });
 ```
 
@@ -68,15 +63,11 @@ To handle typical pagination responses pass the `resultKey` option. The value is
 ```
 
 ```javascript
-server.register({
-    register: require('hapi-csv'),
+await server.register({
+    plugin: require('hapi-csv'),
     options: {
         resultKey: 'items' // We only want the `items` in csv
     }
-}, function (err) {
-
-    if (err) throw err;
-    ...
 });
 ```
 
@@ -108,55 +99,13 @@ Joi.object().keys({
 })
 ```
 
-If you want to convert `a` the key would be `a`.
-For `c` it would be `b.c`.
-
-Full example:
-
-```javascript
-server.route([{
-    ...,
-    config: {
-        ...,
-        response: {
-            schema: Joi.object().keys({
-                first_name: Joi.string(),
-                last_name: Joi.string(),
-                age: Joi.number(),
-                custom: Joi.object(),
-                deepCustom: Joi.object().keys({
-                    deepestCustom: Joi.object()
-                })
-            })
-        },
-        plugins: {
-            'hapi-csv': {
-                'custom': (request, callback) => {
-
-                    const schema = Joi.object().keys({
-                        id: Joi.number(),
-                        name: Joi.string()
-                    });
-
-                    return callback(null, schema);
-                },
-                'deepCustom.deepestCustom': (request, callback) => {
-
-                    return callback(new Error('nope'));
-                }
-            }
-        }
-     }
- ])
-```
-
 ### Excel
 
 You can also enable Excel conversion:
 
 ```javascript
 server.register({
-    register: require('hapi-csv'),
+    plugin: require('hapi-csv'),
     options: {
         enableExcel: true,
         excelWriteOptions: { /* compression: false */ }
