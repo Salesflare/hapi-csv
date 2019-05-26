@@ -23,7 +23,7 @@
   "author": "Salesflare Team",
   "license": "MIT",
   "dependencies": {
-    "async": "^2.6.1",
+    "async": "^3.0.1",
     "exceljs": "^1.6.3",
     "fast-csv": "^2.4.1",
     "hoek": "^6.0.3",
