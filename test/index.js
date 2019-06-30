@@ -1,8 +1,8 @@
 'use strict';
 
-const Lab = require('lab');
-const Code = require('code');
-const Joi = require('joi');
+const Lab = require('@hapi/lab');
+const Code = require('@hapi/code');
+const Joi = require('@hapi/joi');
 const Hapi = require('hapi');
 
 const HapiCsv = require('..');
@@ -363,7 +363,7 @@ describe('Hapi csv', () => {
                 }).allow(null),
                 testNumber: Joi.number().required(),
                 testString: Joi.string().allow(null),
-                testEmail: Joi.string().email({ errorLevel: 68 }).lowercase().max(1000).required(),
+                testEmail: Joi.string().email().lowercase().required(),
                 testDate: Joi.date().iso().allow(null),
                 testDateObject: Joi.date().iso().allow(null),
                 testArray: Joi.array().items(Joi.object().keys({
