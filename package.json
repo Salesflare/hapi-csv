@@ -4,7 +4,9 @@
   "description": "Hapi plugin for converting a Joi response schema and dataset to csv",
   "main": "lib/index.js",
   "scripts": {
-    "test": "lab -a @hapi/code -vL --lint-fix -t 97 -I cptable"
+    "test": "lab -a @hapi/code -vL --lint-fix -t 97 -I cptable",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -27,7 +29,8 @@
     "async": "^3.1.0",
     "exceljs": "^1.13.0",
     "fast-csv": "^3.0.1",
-    "xlsx": "^0.14.3"
+    "xlsx": "^0.14.3",
+    "snyk": "^1.192.4"
   },
   "devDependencies": {
     "@hapi/code": "^5.3.1",
@@ -45,5 +48,6 @@
   "bugs": {
     "url": "https://github.com/Salesflare/hapi-csv/issues"
   },
-  "homepage": "https://github.com/Salesflare/hapi-csv#readme"
+  "homepage": "https://github.com/Salesflare/hapi-csv#readme",
+  "snyk": true
 }
