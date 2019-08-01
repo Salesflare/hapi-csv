@@ -23,14 +23,14 @@
   "author": "Salesflare Team",
   "license": "MIT",
   "dependencies": {
-    "@hapi/hoek": "^8.0.1",
+    "@hapi/hoek": "^8.1.0",
     "async": "^3.1.0",
-    "exceljs": "^1.13.0",
-    "fast-csv": "^3.0.1",
-    "xlsx": "^0.14.3"
+    "exceljs": "^1.14.0",
+    "fast-csv": "^3.4.0",
+    "xlsx": "^0.14.4"
   },
   "devDependencies": {
-    "@hapi/code": "^5.3.1",
+    "@hapi/code": "^6.0.0",
     "@hapi/joi": "^15.1.0",
     "@hapi/lab": "^19.1.0",
     "hapi": "^16.7.0"
