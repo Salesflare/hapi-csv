@@ -32,7 +32,7 @@
   "devDependencies": {
     "@hapi/code": "^6.0.0",
     "@hapi/joi": "^15.1.0",
-    "@hapi/lab": "^19.1.0",
+    "@hapi/lab": "^20.0.0",
     "hapi": "^16.7.0"
   },
   "peerDependencies": {
