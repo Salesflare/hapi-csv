@@ -23,16 +23,16 @@
   "author": "Salesflare Team",
   "license": "MIT",
   "dependencies": {
-    "@hapi/hoek": "^8.3.2",
+    "@hapi/hoek": "^8.5.0",
     "async": "^3.1.0",
-    "exceljs": "^3.2.0",
-    "fast-csv": "^3.4.0",
-    "xlsx": "^0.15.1"
+    "exceljs": "^3.5.0",
+    "fast-csv": "^4.0.2",
+    "xlsx": "^0.15.4"
   },
   "devDependencies": {
     "@hapi/code": "^7.0.0",
     "@hapi/joi": "^15.1.1",
-    "@hapi/lab": "^21.0.0",
+    "@hapi/lab": "^22.0.2",
     "hapi": "^16.7.0"
   },
   "peerDependencies": {
@@ -40,7 +40,7 @@
     "joi": ">=10.x.x"
   },
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=12.0.0"
   },
   "bugs": {
     "url": "https://github.com/Salesflare/hapi-csv/issues"
