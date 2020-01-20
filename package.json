@@ -4,7 +4,7 @@
   "description": "Hapi plugin for converting a Joi response schema and dataset to csv",
   "main": "lib/index.js",
   "scripts": {
-    "test": "lab -a @hapi/code -vL --lint-fix -t 97 -I cptable"
+    "test": "lab -a @hapi/code -vL --lint-fix -t 98 -I cptable"
   },
   "repository": {
     "type": "git",
@@ -23,24 +23,23 @@
   "author": "Salesflare Team",
   "license": "MIT",
   "dependencies": {
-    "@hapi/hoek": "^8.5.0",
-    "async": "^3.1.0",
-    "exceljs": "^3.5.0",
+    "@hapi/hoek": "^9.0.2",
+    "exceljs": "^3.6.1",
     "fast-csv": "^4.0.2",
     "xlsx": "^0.15.4"
   },
   "devDependencies": {
-    "@hapi/code": "^7.0.0",
-    "@hapi/joi": "^15.1.1",
-    "@hapi/lab": "^22.0.2",
-    "hapi": "^16.7.0"
+    "@hapi/code": "^8.0.1",
+    "@hapi/joi": "^17.1.0",
+    "@hapi/lab": "^22.0.3",
+    "@hapi/hapi": "^19.0.5"
   },
   "peerDependencies": {
-    "hapi": ">=16.1.1",
-    "joi": ">=10.x.x"
+    "@hapi/hapi": ">=19.0.5",
+    "@hapi/joi": ">=17.1.0"
   },
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=12.14.0"
   },
   "bugs": {
     "url": "https://github.com/Salesflare/hapi-csv/issues"

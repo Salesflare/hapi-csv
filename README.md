@@ -2,7 +2,8 @@
 
 ## What
 
-Converts the response to csv based on the Joi response schema when the Accept header includes `text/csv` or `application/csv` or the requested route ends with `.csv`
+Converts the response to csv based on the Joi response schema when the Accept header includes `text/csv` or `application/csv` or the requested route ends with `.csv`.
+Converts the response to xlsx (Excel) when the Accept header includes `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` or the requested route ends with `.xlsx`.
 
 ## How
 
@@ -11,17 +12,13 @@ Converts the response to csv based on the Joi response schema when the Accept he
 Register the hapi-csv plugin on the server
 
 ```javascript
-server.register({
-    register: require('hapi-csv'),
+await server.register({
+    plugin: require('hapi-csv'),
     options: {
         maximumElementsInArray: 5,
         separator: ',',
         resultKey: 'items'
     }
-}, function (err) {
-
-    if (err) throw err;
-    ...
 });
 ```
 
@@ -68,15 +65,11 @@ To handle typical pagination responses pass the `resultKey` option. The value is
 ```
 
 ```javascript
-server.register({
-    register: require('hapi-csv'),
+await server.register({
+    plugin: require('hapi-csv'),
     options: {
         resultKey: 'items' // We only want the `items` in csv
     }
-}, function (err) {
-
-    if (err) throw err;
-    ...
 });
 ```
 
@@ -89,9 +82,9 @@ On the route config set the plugin config to an object like
 
 ```javascript
 {
-    'keyPath': (request, callback) => {
+    'keyPath': async (request) => {
 
-        return callback(/* Error, Joi schema */)
+        return JoiSchema;
     }
 }
 ```
@@ -131,18 +124,18 @@ server.route([{
         },
         plugins: {
             'hapi-csv': {
-                'custom': (request, callback) => {
+                'custom': (request) => {
 
                     const schema = Joi.object().keys({
                         id: Joi.number(),
                         name: Joi.string()
                     });
 
-                    return callback(null, schema);
+                    return schema;
                 },
-                'deepCustom.deepestCustom': (request, callback) => {
+                'deepCustom.deepestCustom': (request) => {
 
-                    return callback(new Error('nope'));
+                    throw new Error('nope');
                 }
             }
         }
@@ -155,13 +148,13 @@ server.route([{
 You can also enable Excel conversion:
 
 ```javascript
-server.register({
-    register: require('hapi-csv'),
+await server.register({
+    plugin: require('hapi-csv'),
     options: {
         enableExcel: true,
         excelWriteOptions: { /* compression: false */ }
     }
-}, ...
+});
 ```
 
 `excelWriteOptions` takes anything for [https://github.com/SheetJS/js-xlsx#writing-options](https://github.com/SheetJS/js-xlsx#writing-options)
