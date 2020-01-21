@@ -3,7 +3,7 @@
 ## What
 
 Converts the response to csv based on the Joi response schema when the Accept header includes `text/csv` or `application/csv` or the requested route ends with `.csv`.
-Converts the response to xlsx (Excel) when the Accept header includes `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` or the requested route ends with `.xlsx`.
+Converts the response to xlsx (Excel) with the `enableExcel` option when the Accept header includes `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` or the requested route ends with `.xlsx`.
 
 ## How
 
@@ -75,7 +75,7 @@ await server.register({
 
 ### Dynamic schemas
 
-Hapi-csv supports dynamic response schemas as well.
+hapi-csv supports dynamic response schemas as well.
 Imagine one of your property's schema is dynamic but you still want to export the value of it to csv.
 You can tell hapi-csv to translate a given key on the fly when it is converting the response to csv (`onPreResponse`).
 On the route config set the plugin config to an object like
@@ -145,7 +145,8 @@ server.route([{
 
 ### Excel
 
-You can also enable Excel conversion:
+You can also enable Excel conversion.
+It will convert the response to xlsx (Excel) when the Accept header includes `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` or the requested route ends with `.xlsx`.
 
 ```javascript
 await server.register({
