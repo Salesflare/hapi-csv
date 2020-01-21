@@ -985,4 +985,134 @@ describe('Hapi csv', () => {
             return await server.stop();
         });
     });
+
+    describe('handle cors headers', () => {
+
+        it('Require cors headers to be returned CSV', async () => {
+
+            const result = [{
+                first_name: 'firstName1',
+                last_name: 'lastName1',
+                age: 25
+            }, {
+                first_name: 'firstName2',
+                last_name: 'lastName2',
+                age: 27
+            }];
+
+            const server = new Hapi.Server({
+                routes: {
+                    cors: { credentials: true }
+                }
+            });
+
+            await server.register({
+                plugin: HapiCsv,
+                options: {
+                    resultKey: 'items'
+                }
+            });
+
+            server.route([{
+                method: 'GET',
+                path: '/test',
+                options: {
+                    handler: function (request, h) {
+
+                        return result;
+                    },
+                    response: {
+                        schema: Joi.array().items(
+                            Joi.object().keys({
+                                first_name: Joi.string(),
+                                last_name: Joi.string(),
+                                age: Joi.number()
+                            })
+                        )
+                    }
+                }
+            }]);
+
+            await server.initialize();
+
+            const res = await server.inject({
+                method: 'GET',
+                url: '/test',
+                headers: {
+                    'Accept': 'text/csv'
+                }
+            });
+
+            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
+            expect(res.headers['access-control-allow-credentials']).to.equal('true');
+            expect(res.headers['access-control-expose-headers']).to.equal('WWW-Authenticate,Server-Authorization');
+
+            return server.stop();
+        });
+
+        it('Require cors headers to be returned Excel', async () => {
+
+            const result = [{
+                first_name: 'firstName1',
+                last_name: 'lastName1',
+                age: 25
+            }, {
+                first_name: 'firstName2',
+                last_name: 'lastName2',
+                age: 27
+            }];
+
+            const server = new Hapi.Server({
+                routes: {
+                    cors: { credentials: true }
+                }
+            });
+
+            await server.register({
+                plugin: HapiCsv,
+                options: {
+                    enableExcel: true,
+                    resultKey: 'items'
+                }
+            });
+
+            server.route([{
+                method: 'GET',
+                path: '/test',
+                options: {
+                    handler: function (request, h) {
+
+                        return result;
+                    },
+                    response: {
+                        schema: Joi.array().items(
+                            Joi.object().keys({
+                                first_name: Joi.string(),
+                                last_name: Joi.string(),
+                                age: Joi.number()
+                            })
+                        )
+                    }
+                }
+            }]);
+
+            await server.initialize();
+
+            const res = await server.inject({
+                method: 'GET',
+                url: '/test',
+                headers: {
+                    'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                }
+            });
+
+            expect(res.headers['content-type']).to.equal('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
+            expect(res.headers['access-control-allow-credentials']).to.equal('true');
+            expect(res.headers['access-control-expose-headers']).to.equal('WWW-Authenticate,Server-Authorization');
+
+            return server.stop();
+        });
+    });
 });
