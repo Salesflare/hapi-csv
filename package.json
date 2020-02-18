@@ -23,7 +23,7 @@
   "author": "Salesflare Team",
   "license": "MIT",
   "dependencies": {
-    "@hapi/hoek": "^9.0.2",
+    "@hapi/hoek": "^9.0.3",
     "exceljs": "^3.6.1",
     "fast-csv": "^4.0.2",
     "xlsx": "^0.15.4"
