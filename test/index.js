@@ -2,7 +2,7 @@
 
 const Lab = require('@hapi/lab');
 const Code = require('@hapi/code');
-const Joi = require('@hapi/joi');
+const Joi = require('joi');
 const Hapi = require('@hapi/hapi');
 
 const HapiCsv = require('..');
