@@ -1,6 +1,6 @@
 {
   "name": "hapi-csv",
-  "version": "5.1.0",
+  "version": "5.1.1",
   "description": "Hapi plugin for converting a Joi response schema and dataset to csv",
   "main": "lib/index.js",
   "scripts": {
