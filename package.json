@@ -26,7 +26,7 @@
     "@hapi/hoek": "^9.1.1",
     "exceljs": "^4.2.1",
     "fast-csv": "^4.3.6",
-    "xlsx": "^0.16.9"
+    "xlsx": "^0.17.0"
   },
   "devDependencies": {
     "@hapi/code": "^8.0.2",
