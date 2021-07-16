@@ -23,16 +23,16 @@
   "author": "Salesflare Team",
   "license": "MIT",
   "dependencies": {
-    "@hapi/hoek": "^9.1.1",
+    "@hapi/hoek": "^9.2.0",
     "exceljs": "^4.2.1",
     "fast-csv": "^4.3.6",
-    "xlsx": "^0.16.9"
+    "xlsx": "^0.17.0"
   },
   "devDependencies": {
-    "@hapi/code": "^8.0.2",
-    "joi": "^17.4.0",
-    "@hapi/lab": "^24.1.1",
-    "@hapi/hapi": "^20.1.0"
+    "@hapi/code": "^8.0.3",
+    "joi": "^17.4.1",
+    "@hapi/lab": "^24.3.2",
+    "@hapi/hapi": "^20.1.5"
   },
   "peerDependencies": {
     "@hapi/hapi": ">=19.1.1",
