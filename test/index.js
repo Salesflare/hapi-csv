@@ -332,7 +332,89 @@ describe('Hapi csv', () => {
                 }
             });
 
-            const expectedResult = 'testObject.testPropOne,testObject.testPropTwo,testObject.testPropThree,testNumber,testString,testEmail,testDate,testDateObject,testArray_0.testPropOne,testArray_0.testPropTwo,testArray_1.testPropOne,testArray_1.testPropTwo,testArray_2.testPropOne,testArray_2.testPropTwo,testArray_3.testPropOne,testArray_3.testPropTwo,testArray_4.testPropOne,testArray_4.testPropTwo,testPrimitiveArray_0,testPrimitiveArray_1,testPrimitiveArray_2,testPrimitiveArray_3,testPrimitiveArray_4\n,,,5,test,test@testprovider.com,2016-07-04T13:56:31.000Z,2016-07-04T13:56:31.000Z,1,One,2,Two,3,Three,4,Four,,,5,5,,,';
+            const expectedResult = 'testObject.testPropOne,testObject.testPropTwo,testObject.testPropThree,testNumber,testString,testEmail,testDate,testDateObject,testArray_0.testPropOne,testArray_0.testPropTwo,testArray_1.testPropOne,testArray_1.testPropTwo,testArray_2.testPropOne,testArray_2.testPropTwo,testArray_3.testPropOne,testArray_3.testPropTwo,testArray_4.testPropOne,testArray_4.testPropTwo,testPrimitiveArray_0,testPrimitiveArray_1,testPrimitiveArray_2,testPrimitiveArray_3,testPrimitiveArray_4\n,,,5,test,test@testprovider.com,2016-07-04T13:56:31.000Z,2016-07-04 13:56:31,1,One,2,Two,3,Three,4,Four,,,5,5,,,';
+
+            expect(res.result).to.equal(expectedResult);
+            expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
+            expect(res.headers['content-disposition']).to.equal('attachment;');
+
+            return await server.stop();
+        });
+
+        it('Converts more advanced, nested schema with labels', async () => {
+
+            const server = new Hapi.Server();
+
+            const testResponseSchema = Joi.array().required().items({
+                testObject: Joi.object().keys({
+                    testPropOne: Joi.number().required().label('Test Prop One'),
+                    testPropTwo: Joi.number().label('Test Prop Two'),
+                    testPropThree: Joi.string().label('Test Prop Three')
+                }).allow(null),
+                testNumber: Joi.number().required().label('Test Number'),
+                testString: Joi.string().allow(null).label('Test String'),
+                testEmail: Joi.string().email().lowercase().required().label('Test Email'),
+                testDate: Joi.date().iso().allow(null).label('Test Date'),
+                testDateObject: Joi.date().iso().allow(null).label('Test Date Object'),
+                testArray: Joi.array().items(Joi.object().keys({
+                    testPropOne: Joi.number().required().label('Prop One'),
+                    testPropTwo: Joi.string().label('Prop Two')
+                }).label('Test')),
+                testObjectArrayWithoutKeys: Joi.object(),
+                testPrimitiveArray: Joi.array().items(Joi.number().label('Primitive value'))
+            });
+
+            const dataset = [{
+                testObject: null,
+                testNumber: 5,
+                testString: 'test',
+                testEmail: 'test@testprovider.com',
+                testDate: '2016-07-04T13:56:31.000Z',
+                testDateObject: new Date('2016-07-04T13:56:31.000Z'),
+                testPrimitiveArray: [5, 5],
+                testObjectArrayWithoutKeys: { 'testPropOne': 1 },
+                testArray: [{
+                    testPropOne: 1,
+                    testPropTwo: 'One'
+                }, {
+                    testPropOne: 2,
+                    testPropTwo: 'Two'
+                }, {
+                    testPropOne: 3,
+                    testPropTwo: 'Three'
+                }, {
+                    testPropOne: 4,
+                    testPropTwo: 'Four'
+                }]
+            }];
+
+            await server.register(HapiCsv);
+
+            server.route([{
+                method: 'GET',
+                path: '/test',
+                options: {
+                    handler: (request, h) => {
+
+                        return dataset;
+                    },
+                    response: {
+                        schema: () => testResponseSchema
+                    }
+                }
+            }]);
+
+            await server.initialize();
+
+            const res = await server.inject({
+                method: 'GET',
+                url: '/test',
+                headers: {
+                    'Accept': 'text/csv'
+                }
+            });
+
+            const expectedResult = 'Test Prop One,Test Prop Two,Test Prop Three,Test Number,Test String,Test Email,Test Date,Test Date Object,Test 0 Prop One,Test 0 Prop Two,Test 1 Prop One,Test 1 Prop Two,Test 2 Prop One,Test 2 Prop Two,Test 3 Prop One,Test 3 Prop Two,Test 4 Prop One,Test 4 Prop Two,Primitive value 0,Primitive value 1,Primitive value 2,Primitive value 3,Primitive value 4\n,,,5,test,test@testprovider.com,2016-07-04T13:56:31.000Z,2016-07-04 13:56:31,1,One,2,Two,3,Three,4,Four,,,5,5,,,';
 
             expect(res.result).to.equal(expectedResult);
             expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
