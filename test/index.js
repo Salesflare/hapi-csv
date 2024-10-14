@@ -332,7 +332,7 @@ describe('Hapi csv', () => {
                 }
             });
 
-            const expectedResult = 'testObject.testPropOne,testObject.testPropTwo,testObject.testPropThree,testNumber,testString,testEmail,testDate,testDateObject,testArray_0.testPropOne,testArray_0.testPropTwo,testArray_1.testPropOne,testArray_1.testPropTwo,testArray_2.testPropOne,testArray_2.testPropTwo,testArray_3.testPropOne,testArray_3.testPropTwo,testArray_4.testPropOne,testArray_4.testPropTwo,testPrimitiveArray_0,testPrimitiveArray_1,testPrimitiveArray_2,testPrimitiveArray_3,testPrimitiveArray_4\n,,,5,test,test@testprovider.com,2016-07-04T13:56:31.000Z,2016-07-04 13:56:31,1,One,2,Two,3,Three,4,Four,,,5,5,,,';
+            const expectedResult = 'testObject.testPropOne,testObject.testPropTwo,testObject.testPropThree,testNumber,testString,testEmail,testDate,testDateObject,testArray 1 testPropOne,testArray 1 testPropTwo,testArray 2 testPropOne,testArray 2 testPropTwo,testArray 3 testPropOne,testArray 3 testPropTwo,testArray 4 testPropOne,testArray 4 testPropTwo,testArray 5 testPropOne,testArray 5 testPropTwo,testPrimitiveArray 1,testPrimitiveArray 2,testPrimitiveArray 3,testPrimitiveArray 4,testPrimitiveArray 5\n,,,5,test,test@testprovider.com,2016-07-04T13:56:31.000Z,2016-07-04 13:56:31,1,One,2,Two,3,Three,4,Four,,,5,5,,,';
 
             expect(res.result).to.equal(expectedResult);
             expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
@@ -357,11 +357,16 @@ describe('Hapi csv', () => {
                 testDate: Joi.date().iso().allow(null).label('Test Date'),
                 testDateObject: Joi.date().iso().allow(null).label('Test Date Object'),
                 testArray: Joi.array().items(Joi.object().keys({
-                    testPropOne: Joi.number().required().label('Prop One'),
-                    testPropTwo: Joi.string().label('Prop Two')
+                    testPropOne: Joi.number().required().label('prop one'),
+                    testPropTwo: Joi.string().label('prop two')
                 }).label('Test')),
+                testArrayWithIgnoredLabel: Joi.array().items(Joi.object().keys({
+                    testPropA: Joi.number().required().label('Prop A'),
+                    testPropB: Joi.string().label('Prop B')
+                }).label('_')),
                 testObjectArrayWithoutKeys: Joi.object(),
-                testPrimitiveArray: Joi.array().items(Joi.number().label('Primitive value'))
+                testPrimitiveArray: Joi.array().items(Joi.number().label('Primitive value')),
+                testPrimArrIgnLbl: Joi.array().items(Joi.number().label('_'))
             });
 
             const dataset = [{
@@ -372,6 +377,7 @@ describe('Hapi csv', () => {
                 testDate: '2016-07-04T13:56:31.000Z',
                 testDateObject: new Date('2016-07-04T13:56:31.000Z'),
                 testPrimitiveArray: [5, 5],
+                testPrimArrIgnLbl: [5, 5],
                 testObjectArrayWithoutKeys: { 'testPropOne': 1 },
                 testArray: [{
                     testPropOne: 1,
@@ -385,7 +391,17 @@ describe('Hapi csv', () => {
                 }, {
                     testPropOne: 4,
                     testPropTwo: 'Four'
-                }]
+                }],
+                testArrayWithIgnoredLabel: [
+                    {
+                        testPropA: 1,
+                        testPropB: 'One'
+                    },
+                    {
+                        testPropA: 2,
+                        testPropB: 'Two'
+                    }
+                ]
             }];
 
             await server.register(HapiCsv);
@@ -414,8 +430,10 @@ describe('Hapi csv', () => {
                 }
             });
 
-            const expectedResult = 'Test Prop One,Test Prop Two,Test Prop Three,Test Number,Test String,Test Email,Test Date,Test Date Object,Test 0 Prop One,Test 0 Prop Two,Test 1 Prop One,Test 1 Prop Two,Test 2 Prop One,Test 2 Prop Two,Test 3 Prop One,Test 3 Prop Two,Test 4 Prop One,Test 4 Prop Two,Primitive value 0,Primitive value 1,Primitive value 2,Primitive value 3,Primitive value 4\n,,,5,test,test@testprovider.com,2016-07-04T13:56:31.000Z,2016-07-04 13:56:31,1,One,2,Two,3,Three,4,Four,,,5,5,,,';
+            const expectedResult = 'Test Prop One,Test Prop Two,Test Prop Three,Test Number,Test String,Test Email,Test Date,Test Date Object,Test prop one,Test prop two,Test 2 prop one,Test 2 prop two,Test 3 prop one,Test 3 prop two,Test 4 prop one,Test 4 prop two,Test 5 prop one,Test 5 prop two,Prop A,Prop B,Prop A 2,Prop B 2,Prop A 3,Prop B 3,Prop A 4,Prop B 4,Prop A 5,Prop B 5,Primitive value,Primitive value 2,Primitive value 3,Primitive value 4,Primitive value 5,testPrimArrIgnLbl,testPrimArrIgnLbl 2,testPrimArrIgnLbl 3,testPrimArrIgnLbl 4,testPrimArrIgnLbl 5\n,,,5,test,test@testprovider.com,2016-07-04T13:56:31.000Z,2016-07-04 13:56:31,1,One,2,Two,3,Three,4,Four,,,1,One,2,Two,,,,,,,5,5,,,,5,5,,,';
 
+            console.log('Result', res.result);
+            console.log('Expected', expectedResult);
             expect(res.result).to.equal(expectedResult);
             expect(res.headers['content-type']).to.equal('text/csv; charset=utf-8; header=present;');
             expect(res.headers['content-disposition']).to.equal('attachment;');
@@ -509,7 +527,7 @@ describe('Hapi csv', () => {
                 age: 25,
                 tags: ['person', 'guitar']
             };
-            const userCSV = 'first_name+last_name+age+tags_0\nfirstName+lastName+25+person';
+            const userCSV = 'first_name+last_name+age+tags 1\nfirstName+lastName+25+person';
 
             const server = new Hapi.Server();
 
